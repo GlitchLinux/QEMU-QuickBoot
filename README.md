@@ -1,10 +1,10 @@
 # QEMU-QuickBoot
 QEMU-QuickBoot - Zenity GUI Interface for quick and easy deployment of QEMU Virtual Machines
 
-QEMU QuickBoot is a Bash script designed to simplify the deployment of Virtual Machines (VMs) using QEMU, with a user-friendly GUI interface provided by Zenity. It allows users to quickly create and boot VMs directly from their desktop, using connected physical devices or bootable image files as the source media.
-
-User-Friendly Interface, Utilizes Zenity to present a straightforward interface for selecting VM boot sources and configurations. Multiple Boot Options: Supports booting VMs from connected devices, various file formats (.vhd, .img, .iso), and ISO images with virtual drives or physical devices. Dynamic RAM Configuration: Allows users to specify the amount of RAM (in MB) allocated to the VM. BIOS and UEFI Support: Provides options for booting in BIOS or UEFI mode depending on the user's preference. Error Handling: Includes error handling to ensure smooth operation and user feedback throughout the VM setup process.
+QEMU QuickBoot is a Bash script designed to simplify the deployment of Virtual Machines (VMs) using QEMU, with a user-friendly GUI interface provided by Zenity. It allows users to quickly create and boot VMs directly from their desktop, using connected physical devices or bootable image files as the source media. User-Friendly Interface, Utilizes Zenity to present a straightforward interface for selecting VM boot sources and configurations. Multiple Boot Options: Supports booting VMs from connected devices, various file formats (.vhd, .img, .iso), and ISO images with virtual drives or physical devices. Dynamic RAM Configuration: Allows users to specify the amount of RAM (in MB) allocated to the VM. BIOS and UEFI Support: Provides options for booting in BIOS or UEFI mode depending on the user's preference. Error Handling: Includes error handling to ensure smooth operation and user feedback throughout the VM setup process.
 Prerequisites
+
+Download the QEMU-QuickBoot.sh bash script and install the dependencies to use!
 
 DEPENDENCIES:
 
