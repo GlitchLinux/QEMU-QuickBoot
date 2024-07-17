@@ -6,7 +6,8 @@ Prerequisites
 
 ![Screenshot_2024-07-17_21-59-42](https://github.com/user-attachments/assets/4228f66a-cefe-4c85-bd99-26ad465dd354)
 
-![image](https://github.com/user-attachments/assets/ad79d824-6f7c-48c2-b75a-ebf4c61b123c) ![image](https://github.com/user-attachments/assets/c633e8e1-be98-46cd-b49d-6eea06f2a55b)
+![image](https://github.com/user-attachments/assets/ad79d824-6f7c-48c2-b75a-ebf4c61b123c) ![image](https://github.com/user-attachments/assets/c633e8e1-be98-46cd-b49d-6eea06f2a55b) ![image](https://github.com/user-attachments/assets/81676e56-ecb3-466b-85b7-2337e6e704c1)
+
 
 Download the QEMU-QuickBoot.sh bash script and install the dependencies to use!
 
