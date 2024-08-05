@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GTK theme to dark
-#export GTK_THEME=Greybird:dark
+export GTK_THEME=Greybird:dark
 
 # Calculate 30% wider size for the first Zenity window
 original_width=320 # 30% wider than the original width
@@ -18,7 +18,6 @@ while true; do
 
     # Check if the user canceled the dialog
     if [ $? -ne 0 ]; then
-        zenity --error --text="User canceled operation."
         exit 1
     fi
 
@@ -32,7 +31,6 @@ while true; do
 
             # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
-                zenity --error --text="User canceled operation."
                 exit 1
             fi
 
@@ -43,7 +41,6 @@ while true; do
 
             # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
-                zenity --error --text="User canceled operation."
                 exit 1
             fi
             ;;
@@ -54,7 +51,6 @@ while true; do
 
             # Check if the user canceled the dialog or the selected file doesn't exist
             if [ $? -ne 0 ] || [ ! -f "$selected_drive" ]; then
-                zenity --error --text="File not found or operation canceled. Please try again."
                 continue
             fi
 
@@ -65,7 +61,6 @@ while true; do
 
             # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
-                zenity --error --text="User canceled operation."
                 exit 1
             fi
             ;;
@@ -76,7 +71,6 @@ while true; do
 
             # Check if the user canceled the dialog or the selected file doesn't exist
             if [ $? -ne 0 ] || [ ! -f "$iso_path" ]; then
-                zenity --error --text="File not found or operation canceled. Please try again."
                 continue
             fi
 
@@ -86,7 +80,6 @@ while true; do
 
             # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
-                zenity --error --text="User canceled operation."
                 exit 1
             fi
 
@@ -96,7 +89,6 @@ while true; do
 
                 # Check if the user canceled the dialog or the selected file doesn't exist
                 if [ $? -ne 0 ] || [ ! -f "$selected_drive" ]; then
-                    zenity --error --text="File not found or operation canceled. Please try again."
                     continue
                 fi
             elif [ "$selected_drive" == "Select Physical Device" ]; then
@@ -108,11 +100,9 @@ while true; do
 
                 # Check if the user canceled the dialog
                 if [ $? -ne 0 ]; then
-                    zenity --error --text="User canceled operation."
                     exit 1
                 fi
             else
-                zenity --error --text="Invalid choice. Please try again."
                 continue
             fi
 
@@ -121,13 +111,11 @@ while true; do
 
             # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
-                zenity --error --text="User canceled operation."
                 exit 1
             fi
             ;;
 
         *)
-            zenity --error --text="Invalid choice. Please try again."
             continue
             ;;
     esac
@@ -137,7 +125,6 @@ while true; do
 
     # Check if the user canceled the dialog or the entered RAM size is not a positive integer
     if [ $? -ne 0 ] || ! [[ "$ram_size" =~ ^[1-9][0-9]*$ ]]; then
-        zenity --error --text="Invalid RAM size or operation canceled. Please enter a positive integer."
         continue
     fi
 
@@ -152,7 +139,6 @@ while true; do
     elif [ "$boot_mode" == "UEFI" ]; then
         qemu-system-x86_64 -enable-kvm -cpu host -m "${ram_size}M" -drive file="$selected_drive",format=raw -cdrom "$iso_path" -bios /usr/share/qemu/OVMF.fd -boot order=dc
     else
-        zenity --error --text="Invalid boot mode selected."
         exit 1
     fi
 
@@ -166,4 +152,3 @@ while true; do
 done
 
 # End of script
-
