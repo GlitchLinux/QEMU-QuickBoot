@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Set the GTK theme to dark
-export GTK_THEME=Adwaita:dark
+export GTK_THEME=Greybird:dark
 
 # Calculate 30% wider size for the first Zenity window
-original_width=500  # 30% wider than the original width
-original_height=500
+original_width=320 # 30% wider than the original width
+original_height=320
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")  # Adjusted to 30% wider than the original width
@@ -166,3 +166,4 @@ while true; do
 done
 
 # End of script
+
