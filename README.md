@@ -23,10 +23,11 @@ xdotool
 ovmf
 zenity
 Lsblk
+greybird-gtk-theme
 
 You can install these dependencies on Debian/Ubuntu with:
 
-sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system-x86_64 zenity lsblk
+sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system-x86_64 zenity lsblk greybird-gtk-theme
 
 Run the script:
 ./quickboot.sh
