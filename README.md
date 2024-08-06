@@ -98,5 +98,7 @@ Feel free to submit issues or pull requests if you find any bugs or have suggest
 ## Author
 
 gLiTcH LINUX ([https://github.com/GlitchLinux](https://github.com/GlitchLinux))
+www.glitchlinux.com
+info@glitchlinux.wtf
 
 Happy QuickBoot!
