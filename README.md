@@ -1,4 +1,4 @@
-Here's the updated README with the additional sections included:
+deHere's the updated README with the additional sections included:
 
 # QEMU-QuickBoot
 
@@ -98,7 +98,7 @@ Feel free to submit issues or pull requests if you find any bugs or have suggest
 ## Author
 
 gLiTcH LINUX 
-http://www.glitchlinux.com
+www.glitchlinux.com
 info@glitchlinux.wtf
 
 Happy QuickBoot!
