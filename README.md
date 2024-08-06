@@ -43,7 +43,7 @@ sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui 
 
 To run the script, use:
 ```bash
-./quickboot.sh
+./QEMU-QuickBoot.sh
 ```
 
 ## Boot Modes
