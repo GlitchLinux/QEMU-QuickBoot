@@ -1,3 +1,5 @@
+Here's the updated README with the additional sections included:
+
 # QEMU-QuickBoot
 
 QEMU-QuickBoot is a Zenity GUI interface for quick and easy deployment of QEMU Virtual Machines.
@@ -43,7 +45,7 @@ sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui 
 
 To run the script, use:
 ```bash
-./QEMU-QuickBoot.sh
+./quickboot.sh
 ```
 
 ## Boot Modes
@@ -84,3 +86,17 @@ To run the script, use:
 - **Deploying Rescue Tools**: Deploy rescue tools onto crashed drives without rebooting.
 
 These use cases showcase the versatility and convenience of QEMU-QuickBoot, making it an invaluable tool for various scenarios ranging from OS installations to system recovery and development tasks.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Feel free to submit issues or pull requests if you find any bugs or have suggestions for improvements.
+
+## Author
+
+gLiTcH LINUX ([https://github.com/GlitchLinux](https://github.com/GlitchLinux))
+
+Happy QuickBoot!
