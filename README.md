@@ -97,7 +97,8 @@ Feel free to submit issues or pull requests if you find any bugs or have suggest
 
 ## Author
 
-gLiTcH LINUX 
+GLITCH LINUX 
+
 www.glitchlinux.com
 info@glitchlinux.wtf
 
