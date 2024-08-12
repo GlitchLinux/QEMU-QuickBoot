@@ -4,7 +4,7 @@ deHere's the updated README with the additional sections included:
 
 QEMU-QuickBoot is a Zenity GUI interface for quick and easy deployment of QEMU Virtual Machines.
 
-![QEMU-QuickBoot Screenshot](https://github.com/user-attachments/assets/4228f66a-cefe-4c85-bd99-26ad465dd354)
+![349671419-4228f66a-cefe-4c85-bd99-26ad465dd354](https://github.com/user-attachments/assets/83ee258e-395a-4278-b866-875ee1505089)
 
 ## Overview
 
