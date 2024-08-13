@@ -1,104 +1,81 @@
 #!/bin/bash
 
 # Set the GTK theme to dark
-#export GTK_THEME=Orchis-Grey:dark
+export GTK_THEME=Orchis-Grey:dark
 
 # Calculate 30% wider size for the first Zenity window
-original_width=320 # 30% wider than the original width
-original_height=320
+original_width=325
+original_height=380
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
-bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")  # Adjusted to 30% wider than the original width
+bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
 geometry="${smaller_width}x${smaller_height}"
+
+extra_disks=""
 
 while true; do
     # Option to choose boot source using Zenity
     boot_source_choice=$(zenity --list --title="Select VM Boot Source" --column="Option" --width="$original_width" --height="$smaller_height" \
         "Boot from connected device" "Boot from file (.vhd, .img, .iso)" "ISO & Drive (Virtual disk or Physical Device)")
 
-    # Check if the user canceled the dialog
     if [ $? -ne 0 ]; then
         exit 1
     fi
 
     case $boot_source_choice in
         "Boot from connected device")
-            # Get a list of all drives on the system
             drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
-
-            # Display a numbered list of drives using Zenity and prompt the user to select one
             selected_drive=$(zenity --list --title="Select Disk" --column="Drive" --column="Size" --text "Select a disk:" --width="$bigger_width" --height="$smaller_height" $drives)
 
-            # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
                 exit 1
             fi
 
-            boot_mode=""
-
-            # Prompt the user to choose the boot mode (BIOS or UEFI)
             boot_mode=$(zenity --list --title="Select Boot Mode" --column="Boot Mode" "BIOS" "UEFI" --width="$smaller_width" --height="$smaller_height")
 
-            # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
                 exit 1
             fi
             ;;
 
         "Boot from file (.vhd, .img, .iso)")
-            # Prompt the user to select a virtual disk file (.vhd, .img, .iso)
             selected_drive=$(zenity --file-selection --title="Select Virtual Disk (.vhd, .img, .iso)" --width="$smaller_width" --height="$smaller_height")
 
-            # Check if the user canceled the dialog or the selected file doesn't exist
             if [ $? -ne 0 ] || [ ! -f "$selected_drive" ]; then
                 continue
             fi
 
-            boot_mode=""
-
-            # Prompt the user to choose the boot mode (BIOS or UEFI)
             boot_mode=$(zenity --list --title="Select Boot Mode" --column="Boot Mode" "BIOS" "UEFI" --width="$smaller_width" --height="$smaller_height")
 
-            # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
                 exit 1
             fi
             ;;
 
         "ISO & Drive (Virtual disk or Physical Device)")
-            # Prompt the user to select an ISO file for virtual DVD installer media
             iso_path=$(zenity --file-selection --title="Select .ISO file" --width="$smaller_width" --height="$smaller_height")
 
-            # Check if the user canceled the dialog or the selected file doesn't exist
             if [ $? -ne 0 ] || [ ! -f "$iso_path" ]; then
                 continue
             fi
 
-            # Prompt the user to choose a virtual disk file or physical device
             selected_drive=$(zenity --list --title="Select Virtual Disk or Physical Device" --column="Option" --width="$bigger_width" --height="$smaller_height" \
                 "Select Virtual Disk" "Select Physical Device")
 
-            # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
                 exit 1
             fi
 
             if [ "$selected_drive" == "Select Virtual Disk" ]; then
-                # Prompt the user to select a virtual disk file (.img, .vhd, .vhdx)
                 selected_drive=$(zenity --file-selection --title="Select Virtual Disk (.img, .vhd, .vhdx)" --width="$smaller_width" --height="$smaller_height")
 
-                # Check if the user canceled the dialog or the selected file doesn't exist
                 if [ $? -ne 0 ] || [ ! -f "$selected_drive" ]; then
                     continue
                 fi
             elif [ "$selected_drive" == "Select Physical Device" ]; then
-                # Get a list of all drives on the system
                 drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
-
-                # Display a numbered list of drives using Zenity and prompt the user to select one
                 selected_drive=$(zenity --list --title="Select Physical Device" --column="Drive" --column="Size" --text "Select a physical device:" --width="$bigger_width" --height="$smaller_height" $drives)
 
-                # Check if the user canceled the dialog
                 if [ $? -ne 0 ]; then
                     exit 1
                 fi
@@ -106,10 +83,57 @@ while true; do
                 continue
             fi
 
-            # Prompt the user to choose the boot mode (BIOS or UEFI)
+            add_extra_disk=$(zenity --list --title="Add Extra Disk" --column="Option" --text="Do you want to add an extra disk?" --width="$smaller_width" --height="$smaller_height" \
+                "Yes" "No")
+
+            if [ $? -ne 0 ]; then
+                exit 1
+            fi
+
+            if [ "$add_extra_disk" == "Yes" ]; then
+                extra_disk_id=1
+
+                while true; do
+                    extra_disk_choice=$(zenity --list --title="Select Extra Disk Type" --column="Option" --width="$bigger_width" --height="$smaller_height" \
+                        "Select Virtual Disk" "Select Physical Device" "Done")
+
+                    if [ $? -ne 0 ]; then
+                        exit 1
+                    fi
+
+                    if [ "$extra_disk_choice" == "Select Virtual Disk" ]; then
+                        extra_disk=$(zenity --file-selection --title="Select Extra Virtual Disk (.img, .vhd, .vhdx)" --width="$smaller_width" --height="$smaller_height")
+
+                        if [ $? -ne 0 ] || [ ! -f "$extra_disk" ]; then
+                            continue
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Select Physical Device" ]; then
+                        drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
+                        extra_disk=$(zenity --list --title="Select Extra Physical Device" --column="Drive" --column="Size" --text "Select an extra physical device:" --width="$bigger_width" --height="$smaller_height" $drives)
+
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Done" ]; then
+                        break
+                    else
+                        continue
+                    fi
+                done
+            fi
+
             boot_mode=$(zenity --list --title="Select Boot Mode" --column="Boot Mode" "BIOS" "UEFI" --width="$smaller_width" --height="$smaller_height")
 
-            # Check if the user canceled the dialog
             if [ $? -ne 0 ]; then
                 exit 1
             fi
@@ -120,32 +144,31 @@ while true; do
             ;;
     esac
 
-    # Prompt the user to specify the amount of RAM for the VM using Zenity
     ram_size=$(zenity --entry --title="Enter RAM Size" --text "Enter the amount of RAM for the VM (in MB):" --width="$smaller_width" --height="$smaller_height")
 
-    # Check if the user canceled the dialog or the entered RAM size is not a positive integer
     if [ $? -ne 0 ] || ! [[ "$ram_size" =~ ^[1-9][0-9]*$ ]]; then
         continue
     fi
 
-    # Print the selected drive, boot mode, and RAM size for debugging
+    # Print the selected drive, extra disks, boot mode, and RAM size for debugging
     echo -e "\nSelected Drive: $selected_drive"
+    echo "Extra Disks: $extra_disks"
     echo "Boot Mode: $boot_mode"
     echo "RAM Size: $ram_size MB"
 
     # Start QEMU VM with the specified parameters
-    if [ "$boot_mode" == "BIOS" ]; then
-        qemu-system-x86_64 -enable-kvm -cpu host -m "${ram_size}M" -drive file="$selected_drive",format=raw -cdrom "$iso_path" -boot order=dc
-    elif [ "$boot_mode" == "UEFI" ]; then
-        qemu-system-x86_64 -enable-kvm -cpu host -m "${ram_size}M" -drive file="$selected_drive",format=raw -cdrom "$iso_path" -bios /usr/share/qemu/OVMF.fd -boot order=dc
-    else
-        exit 1
+    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -boot order=dc $extra_disks"
+
+    if [ "$boot_mode" == "UEFI" ]; then
+        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -bios /usr/share/qemu/OVMF.fd -boot order=dc $extra_disks"
     fi
+
+    # Run QEMU command
+    eval $qemu_command
 
     # Combine notifications and prompt in a single Zenity window
     zenity --question --title="QEMU - QuickBoot" --text="QuickBoot another VM?" --width="$smaller_width" --height="$smaller_height"
 
-    # Check if the user wants to QuickBoot another VM using Zenity
     if [ $? -ne 0 ]; then
         break
     fi
