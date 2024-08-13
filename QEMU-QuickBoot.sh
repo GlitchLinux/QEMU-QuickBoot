@@ -31,6 +31,56 @@ while true; do
                 exit 1
             fi
 
+            # Prompt for extra disks
+            add_extra_disk=$(zenity --list --title="Add Extra Disk" --column="Option" --text="Do you want to add an extra disk?" --width="$smaller_width" --height="$smaller_height" \
+                "Yes" "No")
+
+            if [ $? -ne 0 ]; then
+                exit 1
+            fi
+
+            if [ "$add_extra_disk" == "Yes" ]; then
+                extra_disk_id=1
+
+                while true; do
+                    extra_disk_choice=$(zenity --list --title="Select Extra Disk Type" --column="Option" --width="$bigger_width" --height="$smaller_height" \
+                        "Select Virtual Disk" "Select Physical Device" "Done")
+
+                    if [ $? -ne 0 ]; then
+                        exit 1
+                    fi
+
+                    if [ "$extra_disk_choice" == "Select Virtual Disk" ]; then
+                        extra_disk=$(zenity --file-selection --title="Select Extra Virtual Disk (.img, .vhd, .vhdx)" --width="$smaller_width" --height="$smaller_height")
+
+                        if [ $? -ne 0 ] || [ ! -f "$extra_disk" ]; then
+                            continue
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Select Physical Device" ]; then
+                        drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
+                        extra_disk=$(zenity --list --title="Select Extra Physical Device" --column="Drive" --column="Size" --text "Select an extra physical device:" --width="$bigger_width" --height="$smaller_height" $drives)
+
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Done" ]; then
+                        break
+                    else
+                        continue
+                    fi
+                done
+            fi
+
             boot_mode=$(zenity --list --title="Select Boot Mode" --column="Boot Mode" "BIOS" "UEFI" --width="$smaller_width" --height="$smaller_height")
 
             if [ $? -ne 0 ]; then
@@ -43,6 +93,56 @@ while true; do
 
             if [ $? -ne 0 ] || [ ! -f "$selected_drive" ]; then
                 continue
+            fi
+
+            # Prompt for extra disks
+            add_extra_disk=$(zenity --list --title="Add Extra Disk" --column="Option" --text="Do you want to add an extra disk?" --width="$smaller_width" --height="$smaller_height" \
+                "Yes" "No")
+
+            if [ $? -ne 0 ]; then
+                exit 1
+            fi
+
+            if [ "$add_extra_disk" == "Yes" ]; then
+                extra_disk_id=1
+
+                while true; do
+                    extra_disk_choice=$(zenity --list --title="Select Extra Disk Type" --column="Option" --width="$bigger_width" --height="$smaller_height" \
+                        "Select Virtual Disk" "Select Physical Device" "Done")
+
+                    if [ $? -ne 0 ]; then
+                        exit 1
+                    fi
+
+                    if [ "$extra_disk_choice" == "Select Virtual Disk" ]; then
+                        extra_disk=$(zenity --file-selection --title="Select Extra Virtual Disk (.img, .vhd, .vhdx)" --width="$smaller_width" --height="$smaller_height")
+
+                        if [ $? -ne 0 ] || [ ! -f "$extra_disk" ]; then
+                            continue
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Select Physical Device" ]; then
+                        drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
+                        extra_disk=$(zenity --list --title="Select Extra Physical Device" --column="Drive" --column="Size" --text "Select an extra physical device:" --width="$bigger_width" --height="$smaller_height" $drives)
+
+                        if [ $? -ne 0 ]; then
+                            exit 1
+                        fi
+
+                        extra_disks="$extra_disks -drive file=\"$extra_disk\",format=raw,id=extra_drive$extra_disk_id"
+
+                        extra_disk_id=$((extra_disk_id + 1))
+
+                    elif [ "$extra_disk_choice" == "Done" ]; then
+                        break
+                    else
+                        continue
+                    fi
+                done
             fi
 
             boot_mode=$(zenity --list --title="Select Boot Mode" --column="Boot Mode" "BIOS" "UEFI" --width="$smaller_width" --height="$smaller_height")
@@ -83,6 +183,7 @@ while true; do
                 continue
             fi
 
+            # Prompt for extra disks
             add_extra_disk=$(zenity --list --title="Add Extra Disk" --column="Option" --text="Do you want to add an extra disk?" --width="$smaller_width" --height="$smaller_height" \
                 "Yes" "No")
 
