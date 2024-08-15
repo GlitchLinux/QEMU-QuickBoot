@@ -8,6 +8,8 @@ QEMU-QuickBoot is a Zenity GUI interface for quick and easy deployment of QEMU V
 
 QEMU-QuickBoot is a Bash script designed to simplify the deployment of Virtual Machines (VMs) using QEMU, with a user-friendly GUI interface provided by Zenity. It allows users to quickly create and boot VMs directly from their desktop, using connected physical devices or bootable image files as the source media.
 
+> **Note:** Currently, QEMU-QuickBoot is supported only on Debian and Ubuntu-based distributions. Support for Arch and Fedora-based distributions is planned to be added in future updates.
+
 ### Key Features
 
 - **User-Friendly Interface**: Utilizes Zenity to present a straightforward interface for selecting VM boot sources and configurations.
@@ -42,8 +44,7 @@ sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui 
 ### Running the Script
 
 To run the script, use:
-```bash
-./quickboot.sh
+```sudo bash QEMU-QuickBoot.sh
 ```
 
 ## Boot Modes
@@ -97,7 +98,7 @@ Feel free to submit issues or pull requests if you find any bugs or have suggest
 
 GLITCH LINUX 
 
-www.glitchlinux.com
-info@glitchlinux.wtf
+www.glitchlinux.com  
+info@glitchlinux.com
 
 Happy QuickBoot!
