@@ -26,15 +26,14 @@ Download the `QEMU-QuickBoot.sh` Bash script and install the dependencies to use
 
 ### Dependencies
 
-- `qemu-system-x86_64`
+- `qemu-system`
 - `wget`
 - `qemu-utils`
 - `qemu-system-gui`
 - `xdotool`
 - `ovmf`
 - `zenity`
-- `lsblk`
-- `greybird-gtk-theme`
+- `orchis-gtk-theme`
 
 You can install these dependencies on Debian/Ubuntu with:
 ```bash
@@ -43,9 +42,9 @@ sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui 
 
 ### Running the Script
 
-To run the script, use:
-```sudo bash QEMU-QuickBoot.sh
-```
+To run the script:
+
+sudo bash QEMU-QuickBoot.sh
 
 ## Boot Modes
 
