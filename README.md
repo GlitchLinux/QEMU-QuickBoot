@@ -1,5 +1,3 @@
-deHere's the updated README with the additional sections included:
-
 # QEMU-QuickBoot
 
 QEMU-QuickBoot is a Zenity GUI interface for quick and easy deployment of QEMU Virtual Machines.
