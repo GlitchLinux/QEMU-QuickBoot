@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the GTK theme to dark
-export GTK_THEME=Orchis-Grey:dark
+#export GTK_THEME=Orchis-Grey:dark
 
 # Calculate 30% wider size for the first Zenity window
 original_width=325
