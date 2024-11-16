@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Set the GTK theme to dark
-export GTK_THEME=Orchis-Grey:dark
+#export GTK_THEME=Orchis-Grey:dark
 
 # Calculate 30% wider size for the first Zenity window
-original_width=325
-original_height=380
+original_width=440
+original_height=340
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
@@ -258,10 +258,10 @@ while true; do
     echo "RAM Size: $ram_size MB"
 
     # Start QEMU VM with the specified parameters
-    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -boot order=dc $extra_disks"
+    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -boot order=dc $extra_disks"
 
     if [ "$boot_mode" == "UEFI" ]; then
-        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -bios /usr/share/qemu/OVMF.fd -boot order=dc $extra_disks"
+        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -bios /usr/share/qemu/OVMF.fd -boot order=dc $extra_disks"
     fi
 
     # Run QEMU command
