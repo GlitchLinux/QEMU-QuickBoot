@@ -34,8 +34,7 @@ sudo bash QEMU-QuickBoot.sh
 ### Arch Linux
 ```bash
 sudo pacman -Syu
-sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
-edk2-ovmf swtpm guestfs-tools libosinfo
+sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer edk2-ovmf swtpm guestfs-tools libosinfo
 yay -S tuned
 sudo systemctl enable virt${drv}d.service;
 sudo systemctl enable virt${drv}d{,-ro,-admin}.socket;
