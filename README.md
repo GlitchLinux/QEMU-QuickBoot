@@ -35,9 +35,12 @@ Download the `QEMU-QuickBoot.sh` Bash script and install the dependencies to use
 - `zenity`
 - `orchis-gtk-theme`
 
-You can install these dependencies on Debian/Ubuntu with:
+Install dependencies, Download and run script (Debian/Ubuntu):
 ```bash
 sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system zenity orchis-gtk-theme
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash QEMU-QuickBoot.sh
 ```
 
 ### Running the Script
@@ -45,6 +48,15 @@ sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui 
 To run the script:
 
 sudo bash QEMU-QuickBoot.sh
+
+### SSH Access to VM:
+Once the VM is running, you can SSH to it from the host machine. Use the following command to connect:
+
+```bash
+ssh -p 2222 (user)@localhost
+```
+Replace (user) with you actual username.
+
 
 ## Boot Modes
 
