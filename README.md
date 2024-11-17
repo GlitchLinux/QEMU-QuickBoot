@@ -33,8 +33,10 @@ sudo bash QEMU-QuickBoot.sh
 
 ### Arch Linux
 ```bash
-sudo pacman -Syu --noconfirm
-sudo pacman -S --noconfirm qemu wget qemu-arch-extra xdotool ovmf zenity orchis-gtk-theme
+sudo pacman -Syu
+sudo pacman -S qemu qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
+edk2-ovmf swtpm guestfs-tools libosinfo
+yay -S tuned
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
 sudo bash QEMU-QuickBoot.sh
