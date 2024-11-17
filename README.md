@@ -20,12 +20,44 @@ QEMU-QuickBoot is a Bash script designed to simplify the deployment of Virtual M
 
 ![QEMU-QuickBoot Interface](https://github.com/user-attachments/assets/1ac6dfcf-eeba-4276-8a6c-62dc26c513af)
 
-## Installation
+## Installation & Execution
 
-Download the `QEMU-QuickBoot.sh` Bash script and install the dependencies to use.
+Debian/Ubuntu - Install dependencies, Download and run script:
+```bash
+sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system zenity orchis-gtk-theme
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash QEMU-QuickBoot.sh
+```
+
+Arch Linux - Install dependencies, Download and run script:
+```bash
+sudo pacman -Syu --noconfirm
+sudo pacman -S --noconfirm qemu wget qemu-arch-extra xdotool ovmf zenity orchis-gtk-theme
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash QEMU-QuickBoot.sh
+```
+
+Fedora - Install dependencies, Download and run script:
+```bash
+sudo dnf update -y
+sudo dnf install -y qemu wget qemu-utils xdotool ovmf zenity orchis-gtk-theme
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash QEMU-QuickBoot.sh
+```
+
+Open SUSE - Install dependencies, Download and run script:
+```bash
+sudo zypper refresh
+sudo zypper install -y qemu wget qemu-tools xdotool ovmf zenity orchis-gtk-theme
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash QEMU-QuickBoot.sh
+```
 
 ### Dependencies
-
 - `qemu-system`
 - `wget`
 - `qemu-utils`
@@ -34,14 +66,6 @@ Download the `QEMU-QuickBoot.sh` Bash script and install the dependencies to use
 - `ovmf`
 - `zenity`
 - `orchis-gtk-theme`
-
-Install dependencies, Download and run script (Debian/Ubuntu):
-```bash
-sudo apt update && sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system zenity orchis-gtk-theme
-git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
-cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot.sh
-```
 
 ### Running the Script
 
