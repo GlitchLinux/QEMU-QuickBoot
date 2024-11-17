@@ -35,13 +35,12 @@ sudo bash QEMU-QuickBoot.sh
 ```bash
 sudo pacman -Syu
 sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer edk2 swtpm guestfs-tools libosinfo
-yay -S tuned
 sudo systemctl enable virt${drv}d.service;
 sudo systemctl enable virt${drv}d{,-ro,-admin}.socket;
 sudo systemctl enable libvirtd.service
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot.sh
+sudo bash QEMU-QuickBoot-Arch.sh
 ```
 
 ### Fedora
