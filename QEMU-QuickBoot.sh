@@ -5,7 +5,7 @@
 
 # Calculate 30% wider size for the first Zenity window
 original_width=440
-original_height=450
+original_height=460
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
