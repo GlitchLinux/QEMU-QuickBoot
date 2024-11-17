@@ -258,10 +258,10 @@ while true; do
     echo "RAM Size: $ram_size MB"
 
     # Start QEMU VM with the specified parameters
-    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -boot order=dc $extra_disks"
+    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -boot order=dc -netdev user,id=net0,hostfwd=tcp::2222-:22 -device e1000,netdev=net0 $extra_disks"
 
     if [ "$boot_mode" == "UEFI" ]; then
-        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -bios /usr/share/qemu/OVMF.fd -boot order=dc $extra_disks"
+        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -cdrom \"$iso_path\" -bios /usr/share/qemu/OVMF.fd -boot order=dc -netdev user,id=net0,hostfwd=tcp::2222-:22 -device e1000,netdev=net0 $extra_disks"
     fi
 
     # Run QEMU command
