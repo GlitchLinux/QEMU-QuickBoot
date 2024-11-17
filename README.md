@@ -37,6 +37,8 @@ sudo pacman -Syu
 sudo pacman -S qemu qemu-full qemu-img libvirt virt-install virt-manager virt-viewer \
 edk2-ovmf swtpm guestfs-tools libosinfo
 yay -S tuned
+sudo systemctl enable virt${drv}d.service;
+sudo systemctl enable virt${drv}d{,-ro,-admin}.socket;
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
 sudo bash QEMU-QuickBoot.sh
