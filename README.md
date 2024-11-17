@@ -40,24 +40,6 @@ sudo systemctl enable virt${drv}d{,-ro,-admin}.socket;
 sudo systemctl enable libvirtd.service
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot-Arch.sh
-```
-
-### Fedora
-```bash
-sudo dnf update -y
-sudo dnf install -y qemu wget qemu-utils xdotool ovmf zenity orchis-gtk-theme
-git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
-cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot.sh
-```
-
-### Open SUSE
-```bash
-sudo zypper refresh
-sudo zypper install -y qemu wget qemu-tools xdotool ovmf zenity orchis-gtk-theme
-git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
-cd QEMU-QuickBoot
 sudo bash QEMU-QuickBoot.sh
 ```
 
