@@ -65,7 +65,7 @@ Once the VM is running, you can SSH to it from the host machine. Use the followi
 ```bash
 ssh -p 2222 (user)@localhost
 ```
-Replace (user) with you actual username.
+Replace (user) with your actual username.
 
 
 ## Boot Modes
