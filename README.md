@@ -119,7 +119,7 @@ Feel free to submit issues or pull requests if you find any bugs or have suggest
 
 GLITCH LINUX 
 
-www.glitchlinux.com  
+www.glitchlinux.wtf  
 info@glitchlinux.com
 
 Happy QuickBoot!
