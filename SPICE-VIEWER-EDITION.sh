@@ -40,8 +40,8 @@ ensure_network_active() {
                --width="$smaller_width" --height="$smaller_height"
         
         if [ $? -eq 0 ]; then
-            sudo virsh net-start default
-            sudo virsh net-autostart default
+            sudo virsh net-start default 2>/dev/null || true
+            sudo virsh net-autostart default 2>/dev/null || true
         fi
     fi
 }
@@ -70,6 +70,7 @@ while true; do
 
     [ $? -ne 0 ] && exit 1
 
+    iso_path=""
     case "$boot_source_choice" in
         "Boot from connected device")
             drives=$(lsblk -o NAME,SIZE -lnp -d -e 7,11)
@@ -176,15 +177,33 @@ while true; do
     # Ensure network is active
     ensure_network_active
 
-    # Build and execute VM command
-    virt_command="virt-install --name \"$vm_name\" --memory $ram_size --disk path=\"$selected_drive\" --os-variant \"$os_variant\""
+    # Build virt-install command with proper boot method
+    virt_command="virt-install --name \"$vm_name\" --memory $ram_size --os-variant \"$os_variant\""
 
-    [ -n "$iso_path" ] && virt_command="$virt_command --cdrom \"$iso_path\""
-    [ "$boot_mode" == "UEFI" ] && virt_command="$virt_command --boot uefi --machine q35" || virt_command="$virt_command --boot hd"
+    # Handle boot source selection
+    if [ -n "$iso_path" ]; then
+        virt_command="$virt_command --cdrom \"$iso_path\""
+    elif [ "$boot_source_choice" == "Boot from connected device" ]; then
+        virt_command="$virt_command --import"
+    else
+        virt_command="$virt_command --boot hd"
+    fi
+
+    # Add main disk
+    virt_command="$virt_command --disk path=\"$selected_drive\""
+
+    # Add UEFI/BIOS configuration
+    if [ "$boot_mode" == "UEFI" ]; then
+        virt_command="$virt_command --boot uefi --machine q35"
+    fi
+
+    # Add extra disks if specified
     [ -n "$extra_disks" ] && virt_command="$virt_command $extra_disks"
 
-    virt_command="$virt_command --graphics spice,listen=0.0.0.0 --video qxl --network network=default --noautoconsole --wait 0"
+    # Add graphics and networking
+    virt_command="$virt_command --graphics spice,listen=0.0.0.0 --video qxl --network network=default --noautoconsole"
 
+    # Execute the command
     echo "Executing: $virt_command"
     eval $virt_command
 
