@@ -13,55 +13,21 @@ geometry="${smaller_width}x${smaller_height}"
 
 extra_disks=""
 
-# Function to setup virtual network
-setup_virtual_network() {
-    # Check if default network exists
-    if ! virsh net-info default 2>/dev/null; then
-        zenity --question --title="Network Configuration" \
-               --text="Default network not found. Create it now? (Requires sudo)" \
-               --width="$smaller_width" --height="$smaller_height"
-        
-        if [ $? -eq 0 ]; then
-            sudo virsh net-define /usr/share/libvirt/networks/default.xml 2>/dev/null
-            sudo virsh net-autostart default
-            sudo virsh net-start default
-            sudo systemctl restart libvirtd
-            sleep 2
-        fi
-    fi
-    
-    # Verify network is active
-    if virsh net-info default 2>/dev/null | grep -q "Active:.*yes"; then
-        echo "qemu:///system"
-    else
-        zenity --question --title="Network Not Active" \
-               --text="Use user session networking instead?" \
-               --width="$smaller_width" --height="$smaller_height"
-        [ $? -eq 0 ] && echo "qemu:///session" || echo ""
-    fi
-}
-
-# Improved function to check and fix permissions for media access
+# Function to check and fix permissions for media access
 fix_media_permissions() {
     local path="$1"
     local media_dir=$(dirname "$path")
     
     if [[ "$media_dir" == /media/* ]]; then
         zenity --question --title="Permission Required" \
-               --text="ISO file in /media/ may need special permissions. Try to fix?" \
+               --text="The ISO file is in /media/ which requires special permissions. Fix permissions now? (Requires sudo)" \
                --width="$smaller_width" --height="$smaller_height"
         
         if [ $? -eq 0 ]; then
-            # First try standard permissions
-            sudo chmod -R o+x "/media/$(whoami)" 2>/dev/null
-            # If ACLs are supported, use them
-            if setfacl -m u:libvirt-qemu:rx "/media/$(whoami)" 2>/dev/null; then
-                setfacl -m u:libvirt-qemu:rx "$media_dir" 2>/dev/null
-            else
-                # Fallback to group permissions if ACLs not supported
-                sudo usermod -a -G $(stat -c %G "/media/$(whoami)") libvirt-qemu 2>/dev/null
-                sudo chmod -R g+rx "/media/$(whoami)" 2>/dev/null
-            fi
+            local media_user=$(echo "$media_dir" | cut -d'/' -f3)
+            sudo chmod o+x "/media/$media_user" 2>/dev/null
+            sudo setfacl -m u:libvirt-qemu:rx "/media/$media_user" 2>/dev/null || \
+            sudo chmod g+rx "/media/$media_user" 2>/dev/null
         fi
         
         # If still having issues, offer to copy to /tmp
@@ -70,8 +36,8 @@ fix_media_permissions() {
                    --text="Couldn't fix permissions. Copy ISO to /tmp instead?" \
                    --width="$smaller_width" --height="$smaller_height"
             if [ $? -eq 0 ]; then
-                temp_iso="/tmp/$(basename "$path")"
-                cp "$path" "$temp_iso" && path="$temp_iso"
+                temp_path="/tmp/$(basename "$path")"
+                cp "$path" "$temp_path" && path="$temp_path"
             fi
         fi
     fi
@@ -102,12 +68,27 @@ release_disk() {
     return 0
 }
 
+# Function to setup virtual network
+setup_virtual_network() {
+    # Try system connection first
+    if virsh -c qemu:///system list >/dev/null 2>&1; then
+        # Check if default network exists and is active
+        if virsh -c qemu:///system net-info default >/dev/null 2>&1; then
+            echo "qemu:///system"
+            return
+        fi
+    fi
+    
+    # Fall back to user session
+    echo "qemu:///session"
+}
+
 # Function to launch VM viewer
 launch_vm_viewer() {
     local vm_name="$1"
     local connect_uri="$2"
     if which virt-viewer >/dev/null; then
-        virt-viewer --connect "$connect_uri" "$vm_name" &> /dev/null &
+        virt-viewer -c "$connect_uri" "$vm_name" &> /dev/null &
     elif which remote-viewer >/dev/null; then
         remote-viewer "spice://127.0.0.1" &> /dev/null &
     else
@@ -243,7 +224,7 @@ while true; do
         "ubuntu22.04" "ubuntu20.04" "debian11" "fedora36" "centos9")
     [ $? -ne 0 ] && continue
 
-    # Setup virtual network
+    # Setup connection
     connect_uri=$(setup_virtual_network)
     if [ -z "$connect_uri" ]; then
         zenity --error --title="Network Error" \
@@ -292,9 +273,9 @@ while true; do
 
     # Execute the command
     echo "Executing: $virt_command"
-    if ! eval $virt_command; then
+    if ! eval "$virt_command"; then
         zenity --error --title="VM Creation Failed" \
-               --text="Failed to create VM. See terminal for details." \
+               --text="Failed to create VM '$vm_name'.\nCheck terminal for errors." \
                --width="$smaller_width" --height="$smaller_height"
         continue
     fi
@@ -309,7 +290,7 @@ while true; do
                --width="$smaller_width" --height="$smaller_height"
     else
         zenity --error --title="VM Creation Failed" \
-               --text="Failed to create VM '$vm_name'.\nCheck terminal for errors." \
+               --text="VM '$vm_name' failed to start.\nCheck terminal for errors." \
                --width="$smaller_width" --height="$smaller_height"
     fi
 
