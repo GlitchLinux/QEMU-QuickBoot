@@ -13,44 +13,101 @@ geometry="${smaller_width}x${smaller_height}"
 
 extra_disks=""
 
-# Function to check and fix permissions for media access
+# Function to setup virtual network
+setup_virtual_network() {
+    # Check if default network exists
+    if ! virsh net-info default 2>/dev/null; then
+        zenity --question --title="Network Configuration" \
+               --text="Default network not found. Create it now? (Requires sudo)" \
+               --width="$smaller_width" --height="$smaller_height"
+        
+        if [ $? -eq 0 ]; then
+            sudo virsh net-define /usr/share/libvirt/networks/default.xml 2>/dev/null
+            sudo virsh net-autostart default
+            sudo virsh net-start default
+            sudo systemctl restart libvirtd
+            sleep 2
+        fi
+    fi
+    
+    # Verify network is active
+    if virsh net-info default 2>/dev/null | grep -q "Active:.*yes"; then
+        echo "qemu:///system"
+    else
+        zenity --question --title="Network Not Active" \
+               --text="Use user session networking instead?" \
+               --width="$smaller_width" --height="$smaller_height"
+        [ $? -eq 0 ] && echo "qemu:///session" || echo ""
+    fi
+}
+
+# Improved function to check and fix permissions for media access
 fix_media_permissions() {
     local path="$1"
     local media_dir=$(dirname "$path")
     
     if [[ "$media_dir" == /media/* ]]; then
         zenity --question --title="Permission Required" \
-               --text="The ISO file is in /media/ which requires special permissions. Fix permissions now? (Requires sudo)" \
+               --text="ISO file in /media/ may need special permissions. Try to fix?" \
                --width="$smaller_width" --height="$smaller_height"
         
         if [ $? -eq 0 ]; then
-            local media_user=$(echo "$media_dir" | cut -d'/' -f3)
-            sudo chmod o+x "/media/$media_user"
-            sudo setfacl -m u:libvirt-qemu:rx "/media/$media_user"
-            sudo setfacl -m u:libvirt-qemu:rx "$media_dir"
+            # First try standard permissions
+            sudo chmod -R o+x "/media/$(whoami)" 2>/dev/null
+            # If ACLs are supported, use them
+            if setfacl -m u:libvirt-qemu:rx "/media/$(whoami)" 2>/dev/null; then
+                setfacl -m u:libvirt-qemu:rx "$media_dir" 2>/dev/null
+            else
+                # Fallback to group permissions if ACLs not supported
+                sudo usermod -a -G $(stat -c %G "/media/$(whoami)") libvirt-qemu 2>/dev/null
+                sudo chmod -R g+rx "/media/$(whoami)" 2>/dev/null
+            fi
+        fi
+        
+        # If still having issues, offer to copy to /tmp
+        if [ ! -r "$path" ]; then
+            zenity --question --title="Alternative Solution" \
+                   --text="Couldn't fix permissions. Copy ISO to /tmp instead?" \
+                   --width="$smaller_width" --height="$smaller_height"
+            if [ $? -eq 0 ]; then
+                temp_iso="/tmp/$(basename "$path")"
+                cp "$path" "$temp_iso" && path="$temp_iso"
+            fi
         fi
     fi
+    echo "$path"
 }
 
-# Function to ensure default network is active
-ensure_network_active() {
-    if ! virsh net-info default 2>/dev/null | grep -q "Active:.*yes"; then
-        zenity --question --title="Network Not Active" \
-               --text="The 'default' network is not active. Start it now? (Requires sudo)" \
-               --width="$smaller_width" --height="$smaller_height"
-        
-        if [ $? -eq 0 ]; then
-            sudo virsh net-start default 2>/dev/null || true
-            sudo virsh net-autostart default 2>/dev/null || true
+# Function to safely release disk devices
+release_disk() {
+    local disk_path="$1"
+    # Check if disk is in use by any VM
+    for vm in $(virsh list --name --all); do
+        if virsh dumpxml "$vm" | grep -q "$disk_path"; then
+            zenity --question --title="Disk in Use" \
+                   --text="Disk $disk_path is used by VM $vm. Shut down this VM first?" \
+                   --width="$smaller_width" --height="$smaller_height"
+            if [ $? -eq 0 ]; then
+                virsh destroy "$vm" 2>/dev/null
+                virsh undefine "$vm" --nvram 2>/dev/null
+            else
+                return 1
+            fi
         fi
-    fi
+    done
+    
+    # Ensure disk is not mounted
+    sudo umount "${disk_path}"* 2>/dev/null
+    
+    return 0
 }
 
 # Function to launch VM viewer
 launch_vm_viewer() {
     local vm_name="$1"
+    local connect_uri="$2"
     if which virt-viewer >/dev/null; then
-        virt-viewer --connect qemu:///system "$vm_name" &> /dev/null &
+        virt-viewer --connect "$connect_uri" "$vm_name" &> /dev/null &
     elif which remote-viewer >/dev/null; then
         remote-viewer "spice://127.0.0.1" &> /dev/null &
     else
@@ -79,6 +136,13 @@ while true; do
                 --width="$bigger_width" --height="$smaller_height" $drives)
             [ $? -ne 0 ] && exit 1
 
+            if ! release_disk "$selected_drive"; then
+                zenity --error --title="Disk in Use" \
+                       --text="Cannot use $selected_drive - it's in use by another VM" \
+                       --width="$smaller_width" --height="$smaller_height"
+                continue
+            fi
+
             add_extra_disk=$(zenity --list --title="Add Extra Disk" \
                 --column="Option" --text="Add an extra disk?" \
                 --width="$smaller_width" --height="$smaller_height" "Yes" "No")
@@ -105,8 +169,9 @@ while true; do
                                 --column="Drive" --column="Size" \
                                 --text "Select an extra physical device:" \
                                 --width="$bigger_width" --height="$smaller_height" $drives)
-                            [ $? -eq 0 ] && \
-                                extra_disks="$extra_disks --disk path=$extra_disk"
+                            if [ $? -eq 0 ] && release_disk "$extra_disk"; then
+                                extra_disks="$extra_disks --disk path=$extra_disk,check=off"
+                            fi
                             ;;
                         "Done") break ;;
                         *) continue ;;
@@ -127,7 +192,7 @@ while true; do
                 --width="$smaller_width" --height="$smaller_height")
             [ $? -ne 0 ] || [ ! -f "$iso_path" ] && continue
 
-            fix_media_permissions "$iso_path"
+            iso_path=$(fix_media_permissions "$iso_path")
 
             selected_drive=$(zenity --list --title="Select Virtual Disk or Physical Device" \
                 --column="Option" --width="$bigger_width" --height="$smaller_height" \
@@ -145,6 +210,10 @@ while true; do
                     --column="Drive" --column="Size" --text "Select a physical device:" \
                     --width="$bigger_width" --height="$smaller_height" $drives)
                 [ $? -ne 0 ] && exit 1
+                
+                if ! release_disk "$selected_drive"; then
+                    continue
+                fi
             fi
             ;;
         *) continue ;;
@@ -174,13 +243,19 @@ while true; do
         "ubuntu22.04" "ubuntu20.04" "debian11" "fedora36" "centos9")
     [ $? -ne 0 ] && continue
 
-    # Ensure network is active
-    ensure_network_active
+    # Setup virtual network
+    connect_uri=$(setup_virtual_network)
+    if [ -z "$connect_uri" ]; then
+        zenity --error --title="Network Error" \
+               --text="Cannot proceed without network configuration" \
+               --width="$smaller_width" --height="$smaller_height"
+        continue
+    fi
 
-    # Build virt-install command with proper boot method
-    virt_command="virt-install --name \"$vm_name\" --memory $ram_size --os-variant \"$os_variant\""
+    # Build virt-install command
+    virt_command="virt-install --connect $connect_uri --name \"$vm_name\" --memory $ram_size --os-variant \"$os_variant\""
 
-    # Handle boot source selection
+    # Handle boot source
     if [ -n "$iso_path" ]; then
         virt_command="$virt_command --cdrom \"$iso_path\""
     elif [ "$boot_source_choice" == "Boot from connected device" ]; then
@@ -189,8 +264,12 @@ while true; do
         virt_command="$virt_command --boot hd"
     fi
 
-    # Add main disk
-    virt_command="$virt_command --disk path=\"$selected_drive\""
+    # Add disk with appropriate options
+    if [[ "$selected_drive" == /dev/* ]]; then
+        virt_command="$virt_command --disk path=\"$selected_drive\",check=off"
+    else
+        virt_command="$virt_command --disk path=\"$selected_drive\""
+    fi
 
     # Add UEFI/BIOS configuration
     if [ "$boot_mode" == "UEFI" ]; then
@@ -201,17 +280,30 @@ while true; do
     [ -n "$extra_disks" ] && virt_command="$virt_command $extra_disks"
 
     # Add graphics and networking
-    virt_command="$virt_command --graphics spice,listen=0.0.0.0 --video qxl --network network=default --noautoconsole"
+    virt_command="$virt_command --graphics spice,listen=0.0.0.0 --video qxl"
+    
+    if [ "$connect_uri" == "qemu:///system" ]; then
+        virt_command="$virt_command --network network=default"
+    else
+        virt_command="$virt_command --network user"
+    fi
+    
+    virt_command="$virt_command --noautoconsole"
 
     # Execute the command
     echo "Executing: $virt_command"
-    eval $virt_command
+    if ! eval $virt_command; then
+        zenity --error --title="VM Creation Failed" \
+               --text="Failed to create VM. See terminal for details." \
+               --width="$smaller_width" --height="$smaller_height"
+        continue
+    fi
 
     # Launch viewer and check status
-    launch_vm_viewer "$vm_name"
+    launch_vm_viewer "$vm_name" "$connect_uri"
     sleep 3
 
-    if virsh list --all | grep -q "$vm_name"; then
+    if virsh --connect "$connect_uri" list --all | grep -q "$vm_name"; then
         zenity --info --title="VM Started" \
                --text="VM '$vm_name' started successfully.\nViewer window should be visible." \
                --width="$smaller_width" --height="$smaller_height"
