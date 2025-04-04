@@ -27,7 +27,7 @@ export GTK_THEME=$GTK_THEME
 
 # Calculate window sizes for consistent UI
 original_width=440
-original_height=320
+original_height=360
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
@@ -133,11 +133,6 @@ add_extra_disks() {
     echo "$extra_disks"
 }
 
-# Function to get USB devices
-get_usb_devices() {
-    lsusb | awk -F'[ :]' '{printf "%s:%s|%s %s %s %s %s\n", $2, $4, $7, $8, $9, $10, $11}' | sort
-}
-
 # Function to send commands to QEMU monitor
 send_qemu_command() {
     echo "$1" | socat - UNIX-CONNECT:"$QEMU_MONITOR_SOCKET"
@@ -161,6 +156,32 @@ detach_usb_device() {
     echo "Removed USB device $vendor_id:$product_id"
 }
 
+# Function to get USB devices with HID devices first
+get_usb_devices() {
+    # First get HID devices (keyboards, mice, gamepads)
+    lsusb | grep -i "Human Interface Device\|Keyboard\|Mouse\|Gamepad\|Controller" | 
+    awk -F'[ :]' '{printf "%s:%s|%s %s %s %s %s (HID)\n", $2, $4, $7, $8, $9, $10, $11}' | sort
+    
+    # Then get webcams and other common user devices
+    lsusb | grep -i "Webcam\|Camera\|Audio\|Headset\|Microphone" | 
+    awk -F'[ :]' '{printf "%s:%s|%s %s %s %s %s\n", $2, $4, $7, $8, $9, $10, $11}' | sort
+    
+    # Then get all other devices (excluding the ones already listed)
+    lsusb | grep -vi "Human Interface Device\|Keyboard\|Mouse\|Gamepad\|Controller\|Webcam\|Camera\|Audio\|Headset\|Microphone" | 
+    awk -F'[ :]' '{printf "%s:%s|%s %s %s %s %s\n", $2, $4, $7, $8, $9, $10, $11}' | sort
+}
+
+# Function to show a better formatted USB menu
+show_usb_menu() {
+    zenity --list \
+        --title="USB Devices" \
+        --text="Select a USB device to attach" \
+        --column="ID" --column="Device" \
+        $(get_usb_devices | tr '|' ' ') \
+        --width=400 --height=300 \
+        --print-column=1 > "$USB_CONTROL_FIFO"
+}
+
 # Function to launch the floating control panel
 launch_control_panel() {
     local vm_name="$1"
@@ -171,8 +192,9 @@ launch_control_panel() {
     mkfifo "$USB_CONTROL_FIFO"
     
     # Start control panel with YAD as a horizontal toolbar
+    # Modified to be twice as long and half as tall with buttons in a row
     yad --title="VM Control Panel - $vm_name" \
-        --width=350 --height=40 \
+        --width=700 --height=20 \
         --form \
         --window-icon=computer \
         --borders=0 \
@@ -183,12 +205,12 @@ launch_control_panel() {
         --fixed \
         --no-buttons \
         --compact \
-        --field="USB:CBE" \
+        --field="USB Devices:BTN" \
         --field="⏻:BTN" \
         --field="↻:BTN" \
         --field="📷:BTN" \
         --button="×:1" \
-        "$(get_usb_devices)!bash -c \"zenity --list --title='USB Devices' --text='Select a USB device to attach' --column='ID' --column='Device' $(get_usb_devices | tr '|' ' ') --width=500 --height=300 | cut -d'|' -f1 > $USB_CONTROL_FIFO\"" \
+        "bash -c \"show_usb_menu\"" \
         "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
         "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
         "bash -c 'echo SCREENSHOT > $USB_CONTROL_FIFO'" &
