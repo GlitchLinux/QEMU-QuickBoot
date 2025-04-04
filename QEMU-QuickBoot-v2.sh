@@ -170,42 +170,42 @@ launch_control_panel() {
     [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
     mkfifo "$USB_CONTROL_FIFO"
     
-    # Start control panel with YAD (Yet Another Dialog)
+    # Start control panel with YAD as a horizontal toolbar
     yad --title="VM Control Panel - $vm_name" \
-        --width=350 --height=200 \
+        --width=350 --height=50 \
         --form \
-        --field="USB Devices:CB" \
+        --window-icon=computer \
+        --borders=3 \
+        --geometry=+0+0 \
+        --sticky \
+        --fixed \
+        --no-buttons \
+        --field="USB:CBE" \
         --field="Power:BTN" \
         --field="Reset:BTN" \
         --field="Screenshot:BTN" \
         --button="Close VM:1" \
-        --buttons-layout=center \
-        --borders=10 \
-        --window-icon=computer \
-        --dclick-action="bash -c 'echo ATTACH_USB > $USB_CONTROL_FIFO'" \
         "$(get_usb_devices)!bash -c \"zenity --list --title='USB Devices' --text='Select a USB device to attach' --column='ID' --column='Device' $(get_usb_devices | tr '|' ' ') --width=500 --height=300 | cut -d'|' -f1 > $USB_CONTROL_FIFO\"" \
         "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
         "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
-        "bash -c 'echo SCREENSHOT > $USB_CONTROL_FIFO'" \
-        --no-buttons &
+        "bash -c 'echo SCREENSHOT > $USB_CONTROL_FIFO'" &
     
-    control_panel_pid=$!
+        control_panel_pid=$!
     
-    # Process to handle the control panel commands
-    (
-        while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
+        # Rest of the function remains the same
+        (
+          while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
             if read line < "$USB_CONTROL_FIFO"; then
                 case "$line" in
                     ATTACH_USB)
                         if read device_id < "$USB_CONTROL_FIFO"; then
                             attach_usb_device "$device_id"
                             
-                            # Refresh the USB device list in the control panel
-                            yad --title="USB Device Attached" --info \
-                                --text="USB device $device_id has been attached to the VM." \
-                                --timeout=3 --no-buttons &
+                            # Notification instead of dialog for better UX
+                            yad --notification --text="USB device $device_id attached" --icon=computer --timeout=3 &
                         fi
                         ;;
+                    # Rest of the cases remain the same
                     DETACH_USB)
                         if read device_id < "$USB_CONTROL_FIFO"; then
                             detach_usb_device "$device_id"
@@ -220,15 +220,12 @@ launch_control_panel() {
                     SCREENSHOT)
                         screenshot_file="$HOME/qemu_screenshot_$(date +%Y%m%d_%H%M%S).ppm"
                         send_qemu_command "screendump $screenshot_file"
-                        yad --title="Screenshot Saved" --info \
-                            --text="Screenshot saved to:\n$screenshot_file" \
-                            --timeout=3 --no-buttons &
+                        yad --notification --text="Screenshot saved to $screenshot_file" --icon=camera-photo --timeout=3 &
                         ;;
                 esac
             fi
         done
         
-        # Clean up when QEMU process is no longer running
         [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
         kill $control_panel_pid 2>/dev/null
     ) &
