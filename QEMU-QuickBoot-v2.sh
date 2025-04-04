@@ -217,6 +217,36 @@ launch_control_panel() {
     
     control_panel_pid=$!
     
+    launch_control_panel() {
+    local vm_name="$1"
+    local qemu_pid="$2"
+
+    # Create named pipe for USB control
+    [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
+    mkfifo "$USB_CONTROL_FIFO"
+
+    # Start control panel with YAD as a horizontal toolbar
+    yad --title="VM Control Panel - $vm_name" \
+        --width=700 --height=20 \
+        --form \
+        --window-icon=computer \
+        --borders=0 \
+        --geometry=+0+0 \
+        --sticky \
+        --skip-taskbar \
+        --no-focus \
+        --fixed \
+        --no-buttons \
+        --compact \
+        --text-align=center \
+        --field="USB Devices:CB" "$(get_usb_devices | tr '|' ' ')" \
+        --field="Shutdown:BTN" "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
+        --field="Reset:BTN" "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
+        --button="×:1" \
+        &
+    
+    control_panel_pid=$!
+
     # Process to handle the control panel commands
     (
         while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
@@ -225,8 +255,6 @@ launch_control_panel() {
                     ATTACH_USB)
                         if read device_id < "$USB_CONTROL_FIFO"; then
                             attach_usb_device "$device_id"
-                            
-                            # Use notification instead of dialog for better UX
                             yad --notification --text="USB device $device_id attached" --icon=computer --timeout=3 &
                         fi
                         ;;
@@ -241,16 +269,9 @@ launch_control_panel() {
                     RESET)
                         send_qemu_command "system_reset"
                         ;;
-                    SCREENSHOT)
-                        screenshot_file="$HOME/qemu_screenshot_$(date +%Y%m%d_%H%M%S).ppm"
-                        send_qemu_command "screendump $screenshot_file"
-                        yad --notification --text="Screenshot saved to $screenshot_file" --icon=camera-photo --timeout=3 &
-                        ;;
                 esac
             fi
         done
-        
-        # Clean up when QEMU process is no longer running
         [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
         kill $control_panel_pid 2>/dev/null
     ) &
