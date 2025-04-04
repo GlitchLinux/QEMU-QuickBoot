@@ -172,40 +172,42 @@ launch_control_panel() {
     
     # Start control panel with YAD as a horizontal toolbar
     yad --title="VM Control Panel - $vm_name" \
-        --width=350 --height=50 \
+        --width=350 --height=40 \
         --form \
         --window-icon=computer \
-        --borders=3 \
+        --borders=0 \
         --geometry=+0+0 \
         --sticky \
+        --skip-taskbar \
+        --no-focus \
         --fixed \
         --no-buttons \
+        --compact \
         --field="USB:CBE" \
-        --field="Power:BTN" \
-        --field="Reset:BTN" \
-        --field="Screenshot:BTN" \
-        --button="Close VM:1" \
+        --field="⏻:BTN" \
+        --field="↻:BTN" \
+        --field="📷:BTN" \
+        --button="×:1" \
         "$(get_usb_devices)!bash -c \"zenity --list --title='USB Devices' --text='Select a USB device to attach' --column='ID' --column='Device' $(get_usb_devices | tr '|' ' ') --width=500 --height=300 | cut -d'|' -f1 > $USB_CONTROL_FIFO\"" \
         "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
         "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
         "bash -c 'echo SCREENSHOT > $USB_CONTROL_FIFO'" &
     
-        control_panel_pid=$!
+    control_panel_pid=$!
     
-        # Rest of the function remains the same
-        (
-          while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
+    # Process to handle the control panel commands
+    (
+        while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
             if read line < "$USB_CONTROL_FIFO"; then
                 case "$line" in
                     ATTACH_USB)
                         if read device_id < "$USB_CONTROL_FIFO"; then
                             attach_usb_device "$device_id"
                             
-                            # Notification instead of dialog for better UX
+                            # Use notification instead of dialog for better UX
                             yad --notification --text="USB device $device_id attached" --icon=computer --timeout=3 &
                         fi
                         ;;
-                    # Rest of the cases remain the same
                     DETACH_USB)
                         if read device_id < "$USB_CONTROL_FIFO"; then
                             detach_usb_device "$device_id"
@@ -226,6 +228,7 @@ launch_control_panel() {
             fi
         done
         
+        # Clean up when QEMU process is no longer running
         [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
         kill $control_panel_pid 2>/dev/null
     ) &
