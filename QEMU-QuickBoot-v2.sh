@@ -191,10 +191,13 @@ launch_control_panel() {
     [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
     mkfifo "$USB_CONTROL_FIFO"
     
-    # Start control panel with YAD as a horizontal toolbar
-    # Modified to be twice as long and half as tall with buttons in a row
+    # Create USB device list for dropdown
+    usb_list=$(get_usb_devices | awk -F'|' '{print $1}')
+    usb_list=$(echo "$usb_list" | tr '\n' ' ')
+    
+    # Start control panel with horizontal buttons
     yad --title="VM Control Panel - $vm_name" \
-        --width=700 --height=20 \
+        --width=500 --height=40 \
         --form \
         --window-icon=computer \
         --borders=0 \
@@ -203,64 +206,25 @@ launch_control_panel() {
         --skip-taskbar \
         --no-focus \
         --fixed \
-        --no-buttons \
-        --compact \
-        --field="USB Devices:BTN" \
-        --field="⏻:BTN" \
-        --field="↻:BTN" \
-        --field="📷:BTN" \
-        --button="×:1" \
-        "bash -c \"show_usb_menu\"" \
-        "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
-        "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
-        "bash -c 'echo SCREENSHOT > $USB_CONTROL_FIFO'" &
-    
-    control_panel_pid=$!
-    
-    launch_control_panel() {
-    local vm_name="$1"
-    local qemu_pid="$2"
-
-    # Create named pipe for USB control
-    [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
-    mkfifo "$USB_CONTROL_FIFO"
-
-    # Start control panel with YAD as a horizontal toolbar
-    yad --title="VM Control Panel - $vm_name" \
-        --width=700 --height=20 \
-        --form \
-        --window-icon=computer \
-        --borders=0 \
-        --geometry=+0+0 \
-        --sticky \
-        --skip-taskbar \
-        --no-focus \
-        --fixed \
-        --no-buttons \
-        --compact \
-        --text-align=center \
-        --field="USB Devices:CB" "$(get_usb_devices | tr '|' ' ')" \
+        --field="USB Devices:CB" "$usb_list" \
         --field="Shutdown:BTN" "bash -c 'echo SHUTDOWN > $USB_CONTROL_FIFO'" \
         --field="Reset:BTN" "bash -c 'echo RESET > $USB_CONTROL_FIFO'" \
-        --button="×:1" \
-        &
+        --button="Close:1" \
+        --text="<b>VM Controls</b>" \
+        --text-align=center &
     
     control_panel_pid=$!
-
+    
     # Process to handle the control panel commands
     (
         while [ -e "$USB_CONTROL_FIFO" ] && kill -0 $qemu_pid 2>/dev/null; do
             if read line < "$USB_CONTROL_FIFO"; then
                 case "$line" in
-                    ATTACH_USB)
-                        if read device_id < "$USB_CONTROL_FIFO"; then
+                    ATTACH_USB*)
+                        device_id=$(echo "$line" | awk '{print $2}')
+                        if [ -n "$device_id" ]; then
                             attach_usb_device "$device_id"
-                            yad --notification --text="USB device $device_id attached" --icon=computer --timeout=3 &
-                        fi
-                        ;;
-                    DETACH_USB)
-                        if read device_id < "$USB_CONTROL_FIFO"; then
-                            detach_usb_device "$device_id"
+                            yad --notification --text="USB device attached" --icon=computer --timeout=2 &
                         fi
                         ;;
                     SHUTDOWN)
@@ -272,11 +236,12 @@ launch_control_panel() {
                 esac
             fi
         done
+        
+        # Clean up when QEMU process is no longer running
         [ -e "$USB_CONTROL_FIFO" ] && rm -f "$USB_CONTROL_FIFO"
         kill $control_panel_pid 2>/dev/null
     ) &
 }
-
 # Function to refresh USB devices in the control panel
 refresh_usb_devices() {
     # Implementation would depend on how you want to update the YAD dialog
