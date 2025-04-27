@@ -31,7 +31,7 @@ cd QEMU-QuickBoot
 sudo bash QEMU-QuickBoot.sh
 ```
 
-### Arch Linux
+### Arch Linux (Unstable, only BIOS boot works)
 ```bash
 sudo pacman -Syu
 sudo pacman -S qemu-full qemu-img libvirt virt-install virt-manager virt-viewer edk2 swtpm guestfs-tools libosinfo
