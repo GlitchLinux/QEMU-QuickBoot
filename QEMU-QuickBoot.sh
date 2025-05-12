@@ -4,8 +4,8 @@
 export GTK_THEME=Orchis-Dark:dark
 
 # Calculate 30% wider size for the first Zenity window
-original_width=350
-original_height=335
+original_width=360
+original_height=360
 smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
