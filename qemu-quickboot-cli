@@ -1,0 +1,509 @@
+#!/bin/bash
+
+# QEMU QuickBoot CLI Version
+# Supports headless mode and all original features
+
+# Default values
+BOOT_SOURCE=""
+SELECTED_DRIVE=""
+ISO_PATH=""
+EXTRA_DISKS=()
+RAM_SIZE="2048"
+BOOT_MODE="bios"
+HEADLESS=false
+NETWORK_FORWARD="2222-:22"
+
+# Function to display usage
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+QEMU QuickBoot CLI Version - Boot VMs quickly with various options
+
+OPTIONS:
+    -s, --source SOURCE      Boot source: device, file, iso-drive, nas
+    -d, --drive DEVICE       Drive device or image file path
+    -i, --iso ISO_FILE       ISO file path (for iso-drive source)
+    -e, --extra-disk DISK    Add extra disk (can be used multiple times)
+    -r, --ram SIZE_MB        RAM size in MB (default: 2048)
+    -m, --mode MODE          Boot mode: bios or uefi (default: bios)
+    -l, --headless           Run in headless mode (no GUI)
+    -n, --network FORWARD    Network forward rule (default: 2222-:22)
+    -h, --help               Show this help message
+
+BOOT SOURCES:
+    device      - Boot from physical device
+    file        - Boot from disk image file
+    iso-drive   - Boot from ISO with virtual/physical drive
+    nas         - Boot from NAS storage
+
+EXAMPLES:
+    # Boot from physical device
+    $0 -s device -d /dev/sdb -r 4096
+
+    # Boot from disk image with extra disk
+    $0 -s file -d /path/to/disk.img -e /path/to/extra.img -r 2048
+
+    # Boot from ISO with virtual disk (headless)
+    $0 -s iso-drive -i /path/to/os.iso -d /path/to/disk.img -l
+
+    # Boot from NAS with UEFI
+    $0 -s nas -d /mnt/nas/disk.vhd -m uefi -r 4096
+EOF
+}
+
+# Function to check if file/directory exists
+check_path() {
+    if [ ! -e "$1" ]; then
+        echo "Error: Path '$1' does not exist"
+        exit 1
+    fi
+}
+
+# Function to check if device exists
+check_device() {
+    if [ ! -b "$1" ] && [ ! -f "$1" ]; then
+        echo "Error: Device/file '$1' does not exist"
+        exit 1
+    fi
+}
+
+# Function to list available physical devices with numbers
+list_physical_devices() {
+    echo "Available physical devices:"
+    local devices=()
+    local i=1
+    
+    # Read devices into array
+    while IFS= read -r line; do
+        if [ -n "$line" ]; then
+            devices+=("$line")
+            echo "$i) $line"
+            ((i++))
+        fi
+    done < <(lsblk -o NAME,SIZE,TYPE,MOUNTPOINT -lnp -d -e 7,11)
+    
+    echo ""
+    read -p "Select device [1-${#devices[@]}]: " device_choice
+    
+    if [[ "$device_choice" =~ ^[0-9]+$ ]] && [ "$device_choice" -ge 1 ] && [ "$device_choice" -le "${#devices[@]}" ]; then
+        SELECTED_DRIVE=$(echo "${devices[$((device_choice-1))]}" | awk '{print $1}')
+        echo "Selected: $SELECTED_DRIVE"
+    else
+        echo "Invalid selection"
+        return 1
+    fi
+}
+
+# Function to validate boot source
+validate_boot_source() {
+    case "$1" in
+        device|file|iso-drive|nas)
+            return 0
+            ;;
+        *)
+            echo "Error: Invalid boot source '$1'. Must be: device, file, iso-drive, or nas"
+            return 1
+            ;;
+    esac
+}
+
+# Function to validate boot mode
+validate_boot_mode() {
+    case "$1" in
+        bios|uefi)
+            return 0
+            ;;
+        *)
+            echo "Error: Invalid boot mode '$1'. Must be: bios or uefi"
+            return 1
+            ;;
+    esac
+}
+
+# Function to check NAS mount
+check_nas_mounted() {
+    if mount | grep -q "/mnt/nas"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to build QEMU command
+build_qemu_command() {
+    local cmd="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${RAM_SIZE}M"
+    
+    # Add headless mode if specified
+    if [ "$HEADLESS" = true ]; then
+        cmd="$cmd -display none -nographic"
+    fi
+    
+    # Add network configuration (fixed format)
+    cmd="$cmd -netdev user,id=net0,hostfwd=tcp::${NETWORK_FORWARD} -device e1000,netdev=net0"
+    
+    # Add main drive based on boot source
+    case "$BOOT_SOURCE" in
+        device|file|nas)
+            cmd="$cmd -drive file=\"$SELECTED_DRIVE\",format=raw"
+            ;;
+        iso-drive)
+            cmd="$cmd -drive file=\"$SELECTED_DRIVE\",format=raw -cdrom \"$ISO_PATH\""
+            ;;
+    esac
+    
+    # Add boot order
+    if [ "$BOOT_SOURCE" = "iso-drive" ]; then
+        cmd="$cmd -boot order=dc"
+    else
+        cmd="$cmd -boot order=c"
+    fi
+    
+    # Add UEFI if specified
+    if [ "$BOOT_MODE" = "uefi" ]; then
+        if [ -f "/usr/share/qemu/OVMF.fd" ]; then
+            cmd="$cmd -bios /usr/share/qemu/OVMF.fd"
+        elif [ -f "/usr/share/OVMF/OVMF_CODE.fd" ]; then
+            cmd="$cmd -bios /usr/share/OVMF/OVMF_CODE.fd"
+        else
+            echo "Warning: OVMF firmware not found. UEFI boot may not work."
+            echo "Please install OVMF package:"
+            echo "  Ubuntu/Debian: sudo apt install ovmf"
+            echo "  Fedora: sudo dnf install edk2-ovmf"
+            echo "  Arch: sudo pacman -S edk2-ovmf"
+        fi
+    fi
+    
+    # Add extra disks
+    for disk in "${EXTRA_DISKS[@]}"; do
+        cmd="$cmd -drive file=\"$disk\",format=raw"
+    done
+    
+    echo "$cmd"
+}
+
+# Function to select extra disk
+select_extra_disk() {
+    echo ""
+    echo "Select extra disk type:"
+    echo "1) Virtual disk file"
+    echo "2) Physical device" 
+    echo "3) Done adding disks"
+    read -p "Enter choice [1-3]: " extra_choice
+    
+    case $extra_choice in
+        1)
+            read -p "Enter virtual disk path: " extra_disk
+            check_path "$extra_disk"
+            EXTRA_DISKS+=("$extra_disk")
+            echo "Added extra disk: $extra_disk"
+            ;;
+        2)
+            list_physical_devices
+            if [ -n "$SELECTED_DRIVE" ]; then
+                EXTRA_DISKS+=("$SELECTED_DRIVE")
+                echo "Added extra disk: $SELECTED_DRIVE"
+            fi
+            ;;
+        3)
+            return 1
+            ;;
+        *)
+            echo "Invalid choice"
+            ;;
+    esac
+    return 0
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -s|--source)
+            BOOT_SOURCE="$2"
+            shift 2
+            ;;
+        -d|--drive)
+            SELECTED_DRIVE="$2"
+            shift 2
+            ;;
+        -i|--iso)
+            ISO_PATH="$2"
+            shift 2
+            ;;
+        -e|--extra-disk)
+            EXTRA_DISKS+=("$2")
+            shift 2
+            ;;
+        -r|--ram)
+            RAM_SIZE="$2"
+            shift 2
+            ;;
+        -m|--mode)
+            BOOT_MODE="$2"
+            shift 2
+            ;;
+        -l|--headless)
+            HEADLESS=true
+            shift
+            ;;
+        -n|--network)
+            NETWORK_FORWARD="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Interactive mode if no arguments provided
+if [ $# -eq 0 ]; then
+    echo "QEMU QuickBoot CLI - Interactive Mode"
+    echo "====================================="
+    
+    # Get boot source
+    while true; do
+        echo ""
+        echo "Select boot source:"
+        echo "1) Boot from connected device"
+        echo "2) Boot from file (.vhd, .img, .iso)"
+        echo "3) ISO & Drive (Virtual disk or Physical Device)"
+        echo "4) Boot from Network Attached Storage (NAS)"
+        echo "5) List physical devices"
+        read -p "Enter choice [1-5]: " choice
+        
+        case $choice in
+            1)
+                BOOT_SOURCE="device"
+                if list_physical_devices; then
+                    break
+                else
+                    continue
+                fi
+                ;;
+            2)
+                BOOT_SOURCE="file"
+                read -p "Enter disk image path: " SELECTED_DRIVE
+                if check_path "$SELECTED_DRIVE"; then
+                    break
+                else
+                    continue
+                fi
+                ;;
+            3)
+                BOOT_SOURCE="iso-drive"
+                read -p "Enter ISO file path: " ISO_PATH
+                if ! check_path "$ISO_PATH"; then
+                    continue
+                fi
+                echo ""
+                echo "Select drive type:"
+                echo "1) Virtual disk file"
+                echo "2) Physical device"
+                read -p "Enter choice [1-2]: " drive_choice
+                case $drive_choice in
+                    1)
+                        read -p "Enter virtual disk path: " SELECTED_DRIVE
+                        if check_path "$SELECTED_DRIVE"; then
+                            break
+                        else
+                            continue
+                        fi
+                        ;;
+                    2)
+                        if list_physical_devices; then
+                            break
+                        else
+                            continue
+                        fi
+                        ;;
+                    *)
+                        echo "Invalid choice"
+                        continue
+                        ;;
+                esac
+                ;;
+            4)
+                BOOT_SOURCE="nas"
+                if ! check_nas_mounted; then
+                    echo "Error: NAS is not mounted at /mnt/nas"
+                    exit 1
+                fi
+                read -p "Enter NAS disk image path: " SELECTED_DRIVE
+                if check_path "$SELECTED_DRIVE"; then
+                    break
+                else
+                    continue
+                fi
+                ;;
+            5)
+                list_physical_devices
+                ;;
+            *)
+                echo "Invalid choice"
+                ;;
+        esac
+    done
+    
+    # Get extra disks
+    while true; do
+        echo ""
+        echo "Add extra disk?"
+        echo "1) Yes"
+        echo "2) No"
+        read -p "Enter choice [1-2]: " add_extra
+        
+        case $add_extra in
+            1)
+                while select_extra_disk; do
+                    : # Continue adding disks
+                done
+                break
+                ;;
+            2)
+                break
+                ;;
+            *)
+                echo "Invalid choice"
+                ;;
+        esac
+    done
+    
+    # Get RAM size (free input)
+    echo ""
+    read -p "Enter RAM size in MB [2048]: " ram_input
+    if [ -n "$ram_input" ]; then
+        RAM_SIZE="$ram_input"
+    fi
+    
+    # Get boot mode
+    echo ""
+    echo "Select boot mode:"
+    echo "1) BIOS"
+    echo "2) UEFI"
+    read -p "Enter choice [1-2]: " mode_choice
+    
+    case $mode_choice in
+        1)
+            BOOT_MODE="bios"
+            ;;
+        2)
+            BOOT_MODE="uefi"
+            ;;
+        *)
+            echo "Invalid choice, using BIOS"
+            BOOT_MODE="bios"
+            ;;
+    esac
+    
+    # Get headless mode
+    echo ""
+    echo "Run in headless mode?"
+    echo "1) Yes"
+    echo "2) No"
+    read -p "Enter choice [1-2]: " headless_choice
+    
+    case $headless_choice in
+        1)
+            HEADLESS=true
+            ;;
+        2)
+            HEADLESS=false
+            ;;
+        *)
+            echo "Invalid choice, using graphical mode"
+            HEADLESS=false
+            ;;
+    esac
+fi
+
+# Validate inputs
+if [ -z "$BOOT_SOURCE" ]; then
+    echo "Error: Boot source is required"
+    usage
+    exit 1
+fi
+
+if ! validate_boot_source "$BOOT_SOURCE"; then
+    exit 1
+fi
+
+if [ -z "$SELECTED_DRIVE" ]; then
+    echo "Error: Drive is required"
+    usage
+    exit 1
+fi
+
+if [ "$BOOT_SOURCE" = "iso-drive" ] && [ -z "$ISO_PATH" ]; then
+    echo "Error: ISO file is required for iso-drive boot source"
+    usage
+    exit 1
+fi
+
+if ! validate_boot_mode "$BOOT_MODE"; then
+    exit 1
+fi
+
+if ! [[ "$RAM_SIZE" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: RAM size must be a positive integer"
+    exit 1
+fi
+
+# Display configuration
+echo ""
+echo "QEMU QuickBoot Configuration:"
+echo "============================="
+echo "Boot Source: $BOOT_SOURCE"
+echo "Main Drive: $SELECTED_DRIVE"
+if [ "$BOOT_SOURCE" = "iso-drive" ]; then
+    echo "ISO File: $ISO_PATH"
+fi
+echo "RAM: ${RAM_SIZE}MB"
+echo "Boot Mode: $BOOT_MODE"
+echo "Headless: $HEADLESS"
+echo "Network Forward: tcp::$NETWORK_FORWARD"
+if [ ${#EXTRA_DISKS[@]} -gt 0 ]; then
+    echo "Extra Disks:"
+    for disk in "${EXTRA_DISKS[@]}"; do
+        echo "  - $disk"
+    done
+fi
+echo ""
+
+# Build and display QEMU command
+QEMU_CMD=$(build_qemu_command)
+echo "QEMU Command:"
+echo "$QEMU_CMD"
+echo ""
+
+# Confirm and run
+if [ "$HEADLESS" = false ]; then
+    echo "Start VM?"
+    echo "1) Yes"
+    echo "2) No"
+    read -p "Enter choice [1-2]: " confirm_choice
+    
+    case $confirm_choice in
+        1)
+            echo "Starting QEMU VM..."
+            ;;
+        2)
+            echo "VM startup cancelled"
+            exit 0
+            ;;
+        *)
+            echo "Invalid choice, cancelling"
+            exit 0
+            ;;
+    esac
+else
+    echo "Starting QEMU VM in headless mode..."
+fi
+
+eval $QEMU_CMD
