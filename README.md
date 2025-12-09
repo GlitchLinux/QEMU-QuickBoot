@@ -26,7 +26,7 @@ QEMU-QuickBoot is a Bash script designed to simplify the deployment of Virtual M
 ### Debian/Ubuntu
 ```bash
 sudo apt update
-sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system zenity git orchis-gtk-theme
+sudo apt install qemu-system wget qemu-utils qemu-system-gui xdotool ovmf qemu-system zenity git orchis-gtk-theme -y
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
 sudo bash QEMU-QuickBoot.sh
