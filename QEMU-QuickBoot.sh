@@ -13,11 +13,17 @@ smaller_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 0.5}")
 smaller_height=$(awk "BEGIN {printf \"%.0f\n\", $original_height * 0.7}")
 bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
 
+# Icon for YAD windows
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+ICON="$SCRIPT_DIR/QEMU-QuickBoot.png"
+YAD_ICON=""
+[ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
+
 extra_disks=""
 
 while true; do
     # Option to choose boot source using YAD - escape the & character
-    boot_source_choice=$(yad --list \
+    boot_source_choice=$(yad --list $YAD_ICON \
         --title="Select VM Boot Source" \
         --width="$original_width" --height="$smaller_height" \
         --column="Option" \
@@ -57,7 +63,7 @@ while true; do
             selected_drive=$(echo "$selected_drive" | cut -d'|' -f1)
 
             # Prompt for extra disks
-            add_extra_disk=$(yad --list \
+            add_extra_disk=$(yad --list $YAD_ICON \
                 --title="Add Extra Disk" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Option" \
@@ -75,7 +81,7 @@ while true; do
                 extra_disk_id=1
 
                 while true; do
-                    extra_disk_choice=$(yad --list \
+                    extra_disk_choice=$(yad --list $YAD_ICON \
                         --title="Select Extra Disk Type" \
                         --width="$bigger_width" --height="$smaller_height" \
                         --column="Option" \
@@ -136,7 +142,7 @@ while true; do
             fi
 
             # Boot mode selection exactly like your screenshot
-            boot_mode=$(yad --list \
+            boot_mode=$(yad --list $YAD_ICON \
                 --title="Select Boot Mode" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Boot Mode" \
@@ -163,7 +169,7 @@ while true; do
             fi
 
             # Prompt for extra disks
-            add_extra_disk=$(yad --list \
+            add_extra_disk=$(yad --list $YAD_ICON \
                 --title="Add Extra Disk" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Option" \
@@ -181,7 +187,7 @@ while true; do
                 extra_disk_id=1
 
                 while true; do
-                    extra_disk_choice=$(yad --list \
+                    extra_disk_choice=$(yad --list $YAD_ICON \
                         --title="Select Extra Disk Type" \
                         --width="$bigger_width" --height="$smaller_height" \
                         --column="Option" \
@@ -241,7 +247,7 @@ while true; do
                 done
             fi
 
-            boot_mode=$(yad --list \
+            boot_mode=$(yad --list $YAD_ICON \
                 --title="Select Boot Mode" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Boot Mode" \
@@ -267,7 +273,7 @@ while true; do
                 continue
             fi
 
-            selected_drive_type=$(yad --list \
+            selected_drive_type=$(yad --list $YAD_ICON \
                 --title="Select Virtual Disk or Physical Device" \
                 --width="$bigger_width" --height="$smaller_height" \
                 --column="Option" \
@@ -316,7 +322,7 @@ while true; do
             fi
 
             # Prompt for extra disks
-            add_extra_disk=$(yad --list \
+            add_extra_disk=$(yad --list $YAD_ICON \
                 --title="Add Extra Disk" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Option" \
@@ -334,7 +340,7 @@ while true; do
                 extra_disk_id=1
 
                 while true; do
-                    extra_disk_choice=$(yad --list \
+                    extra_disk_choice=$(yad --list $YAD_ICON \
                         --title="Select Extra Disk Type" \
                         --width="$bigger_width" --height="$smaller_height" \
                         --column="Option" \
@@ -394,7 +400,7 @@ while true; do
                 done
             fi
 
-            boot_mode=$(yad --list \
+            boot_mode=$(yad --list $YAD_ICON \
                 --title="Select Boot Mode" \
                 --width="$smaller_width" --height="$smaller_height" \
                 --column="Boot Mode" \
@@ -415,7 +421,7 @@ while true; do
     esac
 
     # Get RAM size using YAD entry
-    ram_size=$(yad --entry \
+    ram_size=$(yad --entry $YAD_ICON \
         --title="Enter RAM Size" \
         --width="$smaller_width" --height="$smaller_height" \
         --text="Enter the amount of RAM for the VM (in MB):" \
@@ -428,7 +434,7 @@ while true; do
 
     # Validate RAM size
     if ! [[ "$ram_size" =~ ^[1-9][0-9]*$ ]]; then
-        yad --error --title="Invalid Input" --text="Please enter a valid RAM size in MB" --width="$smaller_width" --height="$smaller_height"
+        yad --error $YAD_ICON --title="Invalid Input" --text="Please enter a valid RAM size in MB" --width="$smaller_width" --height="$smaller_height"
         continue
     fi
 
@@ -480,10 +486,10 @@ while true; do
             if [ -f "$USB_HOTPLUG" ]; then
                 bash "$USB_HOTPLUG"
             else
-                yad --error --title="USB Hotplug" --text="usb-hotplug.sh not found at:\n$USB_HOTPLUG" --button="OK:0"
+                yad --error $YAD_ICON --title="USB Hotplug" --text="usb-hotplug.sh not found at:\n$USB_HOTPLUG" --button="OK:0"
             fi
         else
-            yad --error --title="USB Hotplug" --text="QEMU monitor socket not found.\nVM may not have started correctly." --button="OK:0"
+            yad --error $YAD_ICON --title="USB Hotplug" --text="QEMU monitor socket not found.\nVM may not have started correctly." --button="OK:0"
         fi
     ) &
 
@@ -491,7 +497,7 @@ while true; do
     eval $qemu_command
 
     # Ask to run another VM
-    yad --question \
+    yad --question $YAD_ICON \
         --title="QEMU - QuickBoot" \
         --width="$smaller_width" --height="$smaller_height" \
         --text="QuickBoot another VM?" \
