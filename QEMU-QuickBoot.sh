@@ -442,7 +442,7 @@ while true; do
     fi
 
     # Start QEMU VM with the specified parameters
-    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
+    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
 
     # Add ISO if specified
     if [ -n "$iso_path" ]; then
@@ -455,7 +455,7 @@ while true; do
 
     # Set UEFI if selected
     if [ "$boot_mode" == "UEFI" ]; then
-        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
+        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
         
         if [ -n "$iso_path" ]; then
             qemu_command="$qemu_command -cdrom \"$iso_path\" -boot order=dc"
