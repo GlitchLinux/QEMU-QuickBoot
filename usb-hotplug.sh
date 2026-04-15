@@ -8,13 +8,17 @@ export GTK_THEME=Orchis:dark
 
 SOCK=/tmp/qemu-monitor.sock
 MEMFILE=/tmp/hotplug-devices.list
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+ICON="$SCRIPT_DIR/QEMU-QuickBoot.png"
+YAD_ICON=""
+[ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
 smaller_width=400
 smaller_height=250
 bigger_width=580
 
 # --- Check socket exists ---
 if [ ! -S "$SOCK" ]; then
-    yad --error \
+    yad --error $YAD_ICON \
         --title="USB Hotplug" \
         --width="$smaller_width" \
         --text="No QEMU monitor socket found at $SOCK\n\nIs a VM running?" \
@@ -24,7 +28,7 @@ fi
 
 # --- Check socat is available ---
 if ! command -v socat &>/dev/null; then
-    yad --error \
+    yad --error $YAD_ICON \
         --title="USB Hotplug" \
         --width="$smaller_width" \
         --text="socat is not installed.\n\nInstall it with:\nsudo apt install socat" \
@@ -64,7 +68,7 @@ mem_get_attached() {
 }
 
 while true; do
-    action=$(yad --list \
+    action=$(yad --list $YAD_ICON \
         --title="QEMU USB Hotplug" \
         --width="$smaller_width" --height="$smaller_height" \
         --column="Action" \
@@ -115,7 +119,7 @@ while true; do
             send_monitor "$attach_cmd"
             mem_write "$mem_key" "1" "$dev_id"
 
-            yad --info \
+            yad --info $YAD_ICON \
                 --title="USB Hotplug" \
                 --width="$smaller_width" \
                 --text="[ i ]  Attaching : USB $name" \
@@ -127,13 +131,13 @@ while true; do
             attached=$(mem_get_attached)
 
             if [ -z "$attached" ]; then
-                yad --info \
+                yad --info $YAD_ICON \
                     --title="USB Hotplug" \
                     --width="$smaller_width" \
                     --text="No devices in session log.\n\nUse manual entry below." \
                     --button="OK:0"
 
-                dev_id=$(yad --entry \
+                dev_id=$(yad --entry $YAD_ICON \
                     --title="Detach USB Device" \
                     --width="$smaller_width" \
                     --text="Enter the Device ID to detach\n(format: usb_BUS_ADDR  e.g. usb_1_45):" \
@@ -144,7 +148,7 @@ while true; do
                 dev_id=$(echo "$dev_id" | tr -d ' ')
                 send_monitor "device_del ${dev_id}"
 
-                yad --info \
+                yad --info $YAD_ICON \
                     --title="USB Hotplug" \
                     --width="$smaller_width" \
                     --text="[ i ]  Detaching : USB $dev_id" \
@@ -173,7 +177,7 @@ while true; do
                 send_monitor "device_del ${dev_id}"
                 mem_write "$mem_key" "0" "$dev_id"
 
-                yad --info \
+                yad --info $YAD_ICON \
                     --title="USB Hotplug" \
                     --width="$smaller_width" \
                     --text="[ i ]  Detaching : USB $mem_key" \
@@ -184,7 +188,7 @@ while true; do
 
         "Session Device Log")
             if [ ! -s "$MEMFILE" ]; then
-                yad --info \
+                yad --info $YAD_ICON \
                     --title="Session Device Log" \
                     --width="$smaller_width" \
                     --text="No devices logged this session yet." \
@@ -198,7 +202,7 @@ while true; do
                 printf "%-42s  %-10s  %s\n", key, status, did
             }' "$MEMFILE")
 
-            yad --text-info \
+            yad --text-info $YAD_ICON \
                 --title="Session Device Log — $MEMFILE" \
                 --width="$bigger_width" --height="$smaller_height" \
                 --fontname="Monospace 10" \
@@ -207,7 +211,7 @@ while true; do
 
             if [ $? -eq 2 ]; then
                 > "$MEMFILE"
-                yad --info \
+                yad --info $YAD_ICON \
                     --title="USB Hotplug" \
                     --width="$smaller_width" \
                     --text="Session log cleared." \
