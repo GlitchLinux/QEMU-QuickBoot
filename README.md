@@ -2,7 +2,7 @@
 
 **QEMU-QuickBoot** is a lightweight YAD-based GUI for rapid deployment of QEMU virtual machines — boot from physical devices, disk images, or ISO files in seconds, directly from your desktop.
 
-![QEMU-QuickBoot](https://github.com/user-attachments/assets/83ee258e-395a-4278-b866-875ee1505089)
+<img width="1567" height="910" alt="womdows-install" src="https://github.com/user-attachments/assets/23008d22-7879-4570-84dc-e988878c6299" />
 
 ---
 
