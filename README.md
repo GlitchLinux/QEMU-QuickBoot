@@ -20,6 +20,9 @@ This release is a significant update over the original Zenity-based version:
 
 ---
 
+<img width="1386" height="1046" alt="hotplug-window" src="https://github.com/user-attachments/assets/9c518e0f-0903-4299-8b63-0d889a42899d" />
+
+
 ## Overview
 
 QEMU-QuickBoot is a Bash script that simplifies virtual machine deployment using QEMU. It provides a clean GUI workflow for selecting boot sources, RAM, and boot mode — then launches the VM with sensible defaults including KVM acceleration, USB 3.0, network forwarding, and SSH access.
