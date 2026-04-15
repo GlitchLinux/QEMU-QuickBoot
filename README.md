@@ -10,13 +10,13 @@
 
 This release is a significant update over the original Zenity-based version:
 
-- **YAD replaces Zenity** — faster, more flexible, better-looking dialogs
-- **USB Hotplug support** — attach and detach USB devices to a running VM without restarting
-- **`usb-hotplug.sh` companion tool** — launches automatically alongside the VM, lists host USB devices via YAD, and attaches them with one click
-- **USB 3.0 controller** — `qemu-xhci` included by default, no manual `-usb` flags needed
-- **QEMU monitor socket** — exposes `/tmp/qemu-monitor.sock` for programmatic device management
-- **Auto-launch hotplug tool** — the USB helper starts automatically after VM boot, no second terminal needed
-- **`socat` integration** — hotplug commands sent directly to the QEMU monitor via Unix socket
+- **YAD replaces Zenity** - faster, more flexible, better-looking dialogs
+- **USB Hotplug support** - attach and detach USB devices to a running VM without restarting
+- **`usb-hotplug.sh` companion tool** - launches automatically alongside the VM, lists host USB devices via YAD, and attaches them with one click
+- **USB 3.0 controller** - `qemu-xhci` included by default, no manual `-usb` flags needed
+- **QEMU monitor socket** - exposes `/tmp/qemu-monitor.sock` for programmatic device management
+- **Auto-launch hotplug tool** - the USB helper starts automatically after VM boot, no second terminal needed
+- **`socat` integration** - hotplug commands sent directly to the QEMU monitor via Unix socket
 
 ---
 
