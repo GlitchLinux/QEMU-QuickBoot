@@ -20,7 +20,7 @@ This release is a significant update over the original Zenity-based version:
 
 ---
 
-<img width="1386" height="1046" alt="hotplug-window" src="https://github.com/user-attachments/assets/9c518e0f-0903-4299-8b63-0d889a42899d" />
+<img width="1305" height="801" alt="hotplug-window-3" src="https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" />
 
 
 ## Overview
