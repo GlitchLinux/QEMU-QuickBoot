@@ -455,11 +455,13 @@ while true; do
         echo "ISO Path: $iso_path"
     fi
 
-    # Clean any stale monitor socket from a previous run
+    # Clean any stale monitor socket and panel state files from a previous run
     rm -f /tmp/qemu-monitor.sock
+    rm -f /tmp/vm-storage-devices.list
+    rm -f /tmp/hotplug-devices.list
 
     # Start QEMU VM with the specified parameters
-    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
+    qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
 
     # Add ISO if specified
     if [ -n "$iso_path" ]; then
@@ -472,7 +474,7 @@ while true; do
 
     # Set UEFI if selected
     if [ "$boot_mode" == "UEFI" ]; then
-        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
+        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M -drive file=\"$selected_drive\",format=raw -usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait"
 
         if [ -n "$iso_path" ]; then
             qemu_command="$qemu_command -cdrom \"$iso_path\" -boot order=dc"
