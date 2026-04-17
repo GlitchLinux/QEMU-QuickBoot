@@ -12,9 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 ICON="$SCRIPT_DIR/QEMU-QuickBoot.png"
 YAD_ICON=""
 [ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
-smaller_width=400
-smaller_height=250
-bigger_width=580
+smaller_width=380
+smaller_height=285
+bigger_width=450
 
 # --- Window positioning ---
 # Honors HOTPLUG_POSX / HOTPLUG_POSY from the parent (QEMU-QuickBoot.sh) so
@@ -103,6 +103,51 @@ mem_get_attached() {
     grep "  1  " "$MEMFILE" 2>/dev/null
 }
 
+# --- Storage state file (separate from USB memfile) ---
+# Format per line: id|type|source|format
+#   id     : storage_N (drive id and device id share this)
+#   type   : "virtual" or "physical"
+#   source : file path or block device path
+#   format : raw | qcow2 | vhdx (only meaningful for virtual)
+STORAGE_FILE=/tmp/vm-storage-devices.list
+touch "$STORAGE_FILE"
+
+# --- Helper: allocate next storage id by scanning the state file ---
+storage_next_id() {
+    local max=0 n
+    while IFS='|' read -r id _ _ _; do
+        n=$(echo "$id" | sed 's/^storage_//')
+        [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n"
+    done < "$STORAGE_FILE"
+    echo "storage_$((max + 1))"
+}
+
+# --- Helper: record a new hot-added storage device ---
+storage_record() {
+    # args: id type source format
+    echo "$1|$2|$3|$4" >> "$STORAGE_FILE"
+}
+
+# --- Helper: remove a storage device entry by id ---
+storage_forget() {
+    local id="$1"
+    grep -v "^${id}|" "$STORAGE_FILE" > "${STORAGE_FILE}.tmp" 2>/dev/null && \
+        mv "${STORAGE_FILE}.tmp" "$STORAGE_FILE"
+}
+
+# --- Helper: infer qemu disk format from file extension ---
+storage_format_from_path() {
+    local path="$1"
+    local ext="${path##*.}"
+    case "${ext,,}" in
+        qcow2|qcow)  echo "qcow2" ;;
+        vhdx)        echo "vhdx" ;;
+        vhd|vpc)     echo "vpc" ;;
+        vmdk)        echo "vmdk" ;;
+        *)           echo "raw" ;;
+    esac
+}
+
 while true; do
     action=$(yad --list $YAD_ICON $YAD_POS \
         --title="QEMU VM Controls" \
@@ -113,7 +158,8 @@ while true; do
         "Attach USB Device" \
         "Detach USB Device" \
         "Session Device Log" \
-        "Network: Info &amp; Port Forwards")
+        "Network: Info &amp; Port Forwards" \
+        "Storage Manager")
 
     [ $? -ne 0 ] && exit 0
     action=$(echo "$action" | sed 's/|$//')
@@ -435,6 +481,218 @@ ${usernet_raw:-  (no response from QEMU monitor)}"
                                 --timeout=4 --timeout-indicator=bottom \
                                 --no-buttons
                         fi
+                        ;;
+                esac
+            done
+            ;;
+
+        "Storage Manager")
+            # Inner loop for the storage sub-menu.
+            while true; do
+                stor_action=$(yad --list $YAD_ICON $YAD_POS \
+                    --title="Storage Manager" \
+                    --width="$smaller_width" --height="$smaller_height" \
+                    --column="Action" \
+                    --text="QEMU-QuickBoot Storage Manager" \
+                    --button="Back:1" --button="OK:0" \
+                    "Add storage device" \
+                    "Remove storage device" \
+                    "View current storage layout")
+
+                [ $? -ne 0 ] && break
+                stor_action=$(echo "$stor_action" | sed 's/|$//')
+
+                case "$stor_action" in
+
+                    "Add storage device")
+                        # Choose source type, mirroring QEMU-QuickBoot's launch-time prompt.
+                        src_type=$(yad --list $YAD_ICON $YAD_POS \
+                            --title="Add Storage" \
+                            --width="$smaller_width" --height="$smaller_height" \
+                            --column="Source" \
+                            --text="Attach what kind of storage?" \
+                            --button="Cancel:1" --button="OK:0" \
+                            "Virtual Disk" \
+                            "Physical Device")
+
+                        [ $? -ne 0 ] && continue
+                        src_type=$(echo "$src_type" | sed 's/|$//')
+
+                        source_path=""
+                        dev_kind=""
+
+                        if [ "$src_type" = "Virtual Disk" ]; then
+                            source_path=$(yad --file $YAD_ICON $YAD_POS \
+                                --title="Select Virtual Disk (.img, .qcow2, .vhd, .vhdx)" \
+                                --width="$bigger_width" --height="$smaller_height" \
+                                --file-filter="Virtual Disks | *.img *.qcow2 *.qcow *.vhd *.vhdx *.vmdk *.raw" \
+                                --file-filter="All files | *")
+                            [ $? -ne 0 ] || [ ! -f "$source_path" ] && continue
+                            dev_kind="virtual"
+                        else
+                            # Same lsblk approach as the launch-time picker. No
+                            # filtering — user takes responsibility per convention.
+                            yad_args=("--list"
+                                "--title=Select Physical Device"
+                                "--width=$bigger_width" "--height=$smaller_height"
+                                "--posx=$HOTPLUG_POSX" "--posy=$HOTPLUG_POSY"
+                                "--column=Drive" "--column=Size"
+                                "--text=Select a physical device to attach:"
+                                "--button=Cancel:1" "--button=Attach:0")
+                            while IFS= read -r line; do
+                                if [ -n "$line" ]; then
+                                    d=$(echo "$line" | awk '{print $1}')
+                                    s=$(echo "$line" | awk '{print $2}')
+                                    yad_args+=("$d" "$s")
+                                fi
+                            done <<< "$(lsblk -o NAME,SIZE -lnp -d -e 7,11)"
+
+                            source_path=$(yad "${yad_args[@]}")
+                            [ $? -ne 0 ] && continue
+                            source_path=$(echo "$source_path" | cut -d'|' -f1)
+                            [ -z "$source_path" ] || [ ! -b "$source_path" ] && continue
+                            dev_kind="physical"
+                        fi
+
+                        # Determine format (physical devices are always raw)
+                        if [ "$dev_kind" = "physical" ]; then
+                            fmt="raw"
+                        else
+                            fmt=$(storage_format_from_path "$source_path")
+                        fi
+
+                        stor_id=$(storage_next_id)
+
+                        # drive_add + device_add. Using virtio-scsi bus scsi0.0
+                        # (the controller added by QEMU-QuickBoot at launch).
+                        add_drive_cmd="drive_add 0 if=none,id=${stor_id},file=${source_path},format=${fmt}"
+                        add_drive_result=$(query_monitor "$add_drive_cmd")
+
+                        # drive_add usually prints "OK" or an error line on failure.
+                        if [[ "$add_drive_result" == *"could not"* ]] || \
+                           [[ "$add_drive_result" == *"error"* ]] || \
+                           [[ "$add_drive_result" == *"Error"* ]] || \
+                           [[ "$add_drive_result" == *"Invalid"* ]]; then
+                            yad --error $YAD_ICON $YAD_POS \
+                                --title="drive_add failed" \
+                                --width="$bigger_width" \
+                                --text="QEMU rejected drive_add:\n\n${add_drive_result}" \
+                                --button="OK:0"
+                            continue
+                        fi
+
+                        add_dev_cmd="device_add scsi-hd,drive=${stor_id},id=${stor_id},bus=scsi0.0"
+                        add_dev_result=$(query_monitor "$add_dev_cmd")
+
+                        if [ -n "$add_dev_result" ]; then
+                            # Roll back the drive so we don't leak an orphan.
+                            query_monitor "drive_del ${stor_id}" >/dev/null 2>&1
+                            yad --error $YAD_ICON $YAD_POS \
+                                --title="device_add failed" \
+                                --width="$bigger_width" \
+                                --text="QEMU rejected device_add. The drive has been rolled back.\n\n${add_dev_result}" \
+                                --button="OK:0"
+                            continue
+                        fi
+
+                        storage_record "$stor_id" "$dev_kind" "$source_path" "$fmt"
+
+                        yad --info $YAD_ICON $YAD_POS \
+                            --title="Storage Attached" \
+                            --width="$bigger_width" \
+                            --text="[ + ]  ${stor_id}  (${dev_kind}, ${fmt})\n${source_path}\n\nGuest should see a new SCSI disk (/dev/sdX on Linux)." \
+                            --timeout=5 --timeout-indicator=bottom \
+                            --no-buttons
+                        ;;
+
+                    "Remove storage device")
+                        if [ ! -s "$STORAGE_FILE" ]; then
+                            yad --info $YAD_ICON $YAD_POS \
+                                --title="Remove Storage" \
+                                --width="$smaller_width" \
+                                --text="No hot-added storage devices to remove.\n\n(The boot disk is not listed here and cannot be detached.)" \
+                                --button="OK:0"
+                            continue
+                        fi
+
+                        yad_args=("--list"
+                            "--title=Remove Storage Device"
+                            "--width=$bigger_width" "--height=$smaller_height"
+                            "--posx=$HOTPLUG_POSX" "--posy=$HOTPLUG_POSY"
+                            "--column=ID" "--column=Type" "--column=Format" "--column=Source"
+                            "--text=Select a device to detach:"
+                            "--button=Cancel:1" "--button=Detach:0")
+
+                        while IFS='|' read -r id kind src fmt; do
+                            [ -z "$id" ] && continue
+                            yad_args+=("$id" "$kind" "$fmt" "$src")
+                        done < "$STORAGE_FILE"
+
+                        selected=$(yad "${yad_args[@]}")
+                        [ $? -ne 0 ] && continue
+
+                        rm_id=$(echo "$selected" | cut -d'|' -f1)
+                        rm_src=$(echo "$selected" | cut -d'|' -f4)
+
+                        # Light best-practice nudge, not an alarm.
+                        yad --question $YAD_ICON $YAD_POS \
+                            --title="Detach ${rm_id}" \
+                            --width="$bigger_width" \
+                            --text="About to detach:\n  ${rm_id}  →  ${rm_src}\n\nTip: for cleanest results, unmount the device inside the guest first. Detaching a device that is still in use may cause I/O errors or data loss.\n\nProceed?" \
+                            --button="Cancel:1" --button="Proceed:0"
+                        [ $? -ne 0 ] && continue
+
+                        del_dev_result=$(query_monitor "device_del ${rm_id}")
+                        if [ -n "$del_dev_result" ]; then
+                            yad --error $YAD_ICON $YAD_POS \
+                                --title="device_del failed" \
+                                --width="$bigger_width" \
+                                --text="QEMU rejected device_del:\n\n${del_dev_result}" \
+                                --button="OK:0"
+                            continue
+                        fi
+
+                        # Give QEMU a moment to finish the hotplug tear-down before
+                        # releasing the backing drive. Without this, drive_del can
+                        # race and complain the drive is still in use.
+                        sleep 0.3
+                        query_monitor "drive_del ${rm_id}" >/dev/null 2>&1
+
+                        storage_forget "$rm_id"
+
+                        yad --info $YAD_ICON $YAD_POS \
+                            --title="Storage Detached" \
+                            --width="$smaller_width" \
+                            --text="[ - ]  ${rm_id} detached." \
+                            --timeout=4 --timeout-indicator=bottom \
+                            --no-buttons
+                        ;;
+
+                    "View current storage layout")
+                        # Our state file first (actionable info), then raw info block.
+                        if [ -s "$STORAGE_FILE" ]; then
+                            hot_added=$(awk -F'|' '{printf "  %-12s  %-8s  %-6s  %s\n", $1, $2, $4, $3}' "$STORAGE_FILE")
+                        else
+                            hot_added="  (none)"
+                        fi
+
+                        info_raw=$(query_monitor "info block")
+                        [ -z "$info_raw" ] && info_raw="  (no response from QEMU monitor)"
+
+                        layout_text="Hot-added devices (managed by this panel):
+
+${hot_added}
+
+Full block-device layout ('info block'):
+
+${info_raw}"
+
+                        yad --text-info $YAD_ICON $YAD_POS \
+                            --title="Storage Layout" \
+                            --width="$bigger_width" --height="400" \
+                            --fontname="Monospace 10" \
+                            --button="OK:0" \
+                            <<< "$layout_text"
                         ;;
                 esac
             done
