@@ -16,6 +16,22 @@ smaller_width=400
 smaller_height=250
 bigger_width=580
 
+# --- Window positioning ---
+# Honors HOTPLUG_POSX / HOTPLUG_POSY from the parent (QEMU-QuickBoot.sh) so
+# the hotplug window opens to the side of the VM, not on top of it.
+# Falls back to computing an upper-right position if not provided.
+if [ -z "$HOTPLUG_POSX" ]; then
+    _screen_w=""
+    if command -v xdpyinfo &>/dev/null; then
+        _screen_w=$(xdpyinfo 2>/dev/null | awk '/dimensions:/ {print $2}' | cut -d'x' -f1)
+    fi
+    [ -z "$_screen_w" ] && _screen_w=1920
+    HOTPLUG_POSX=$(( _screen_w - smaller_width - 40 ))
+    [ "$HOTPLUG_POSX" -lt 0 ] && HOTPLUG_POSX=40
+fi
+[ -z "$HOTPLUG_POSY" ] && HOTPLUG_POSY=120
+YAD_POS="--posx=$HOTPLUG_POSX --posy=$HOTPLUG_POSY"
+
 # --- Check socket exists ---
 if [ ! -S "$SOCK" ]; then
     yad --error $YAD_ICON \
@@ -68,7 +84,7 @@ mem_get_attached() {
 }
 
 while true; do
-    action=$(yad --list $YAD_ICON \
+    action=$(yad --list $YAD_ICON $YAD_POS \
         --title="QEMU USB Hotplug" \
         --width="$smaller_width" --height="$smaller_height" \
         --column="Action" \
@@ -87,6 +103,7 @@ while true; do
             yad_args=("--list"
                 "--title=Select USB Device to Attach"
                 "--width=$bigger_width" "--height=$smaller_height"
+                "--posx=$HOTPLUG_POSX" "--posy=$HOTPLUG_POSY"
                 "--column=Bus" "--column=Device" "--column=ID" "--column=Name"
                 "--text=Select a USB device to attach to the VM:"
                 "--button=Cancel:1" "--button=Attach:0")
@@ -137,7 +154,7 @@ while true; do
                     --text="No devices in session log.\n\nUse manual entry below." \
                     --button="OK:0"
 
-                dev_id=$(yad --entry $YAD_ICON \
+                dev_id=$(yad --entry $YAD_ICON $YAD_POS \
                     --title="Detach USB Device" \
                     --width="$smaller_width" \
                     --text="Enter the Device ID to detach\n(format: usb_BUS_ADDR  e.g. usb_1_45):" \
@@ -158,6 +175,7 @@ while true; do
                 yad_args=("--list"
                     "--title=Select Device to Detach"
                     "--width=$bigger_width" "--height=$smaller_height"
+                    "--posx=$HOTPLUG_POSX" "--posy=$HOTPLUG_POSY"
                     "--column=Device" "--column=ID"
                     "--text=Select a device to detach from the VM:"
                     "--button=Cancel:1" "--button=Detach:0")
@@ -202,7 +220,7 @@ while true; do
                 printf "%-42s  %-10s  %s\n", key, status, did
             }' "$MEMFILE")
 
-            yad --text-info $YAD_ICON \
+            yad --text-info $YAD_ICON $YAD_POS \
                 --title="Session Device Log — $MEMFILE" \
                 --width="$bigger_width" --height="$smaller_height" \
                 --fontname="Monospace 10" \
