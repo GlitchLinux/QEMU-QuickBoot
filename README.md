@@ -56,7 +56,7 @@ sudo apt update
 sudo apt install qemu-system qemu-utils qemu-system-gui ovmf yad socat wget git orchis-gtk-theme -y
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot.sh
+sudo bash qemu-quickboot.sh
 ```
 
 ### Arch Linux *(BIOS only — UEFI unstable)*
@@ -66,7 +66,7 @@ sudo pacman -Syu
 sudo pacman -S qemu-full qemu-img edk2 yad socat git
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
-sudo bash QEMU-QuickBoot.sh
+sudo bash qemu-quickboot.sh
 ```
 
 ---
