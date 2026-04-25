@@ -23,7 +23,7 @@ bigger_width=$(awk "BEGIN {printf \"%.0f\n\", $original_width * 1.3}")
 
 # Icon for YAD windows
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-ICON="$SCRIPT_DIR/QEMU-QuickBoot.png"
+ICON="$SCRIPT_DIR/qemu-quickboot.png"
 YAD_ICON=""
 [ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
 
