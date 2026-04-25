@@ -20,7 +20,7 @@ SOCK=/tmp/qemu-monitor.sock
 MEMFILE=/tmp/hotplug-devices.list
 RESTART_FILE=/tmp/qemu-quickboot-restart
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-ICON="$SCRIPT_DIR/QEMU-QuickBoot.png"
+ICON="$SCRIPT_DIR/qemu-quickboot.png"
 YAD_ICON=""
 [ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
 smaller_width=380
