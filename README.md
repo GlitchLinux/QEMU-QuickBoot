@@ -19,9 +19,10 @@ This release is a major update over the original Zenity-based version, with two 
 - **Auto-launch companion panel** — settings panel starts automatically after VM boot, no second terminal needed
 - **`socat` integration** — hotplug commands sent directly to the QEMU monitor via Unix socket
 
-### April 2026 — Format autodetect + VM Session Settings panel
+### April 2026 — Format autodetect, cross-distro UEFI, VM Session Settings panel
 
 - **Smart boot-source handling** — ISOs now boot via `-cdrom` (not as raw drives), and `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` images are mounted with their actual format instead of being forced to `raw`. Same applies to extra disks.
+- **Cross-distro UEFI** — OVMF firmware path is now autodetected (Arch's `/usr/share/edk2/x64/OVMF.4m.fd`, Debian's `/usr/share/qemu/OVMF.fd`, Fedora's `/usr/share/edk2/ovmf/OVMF_CODE.fd`, etc.). Tested on Garuda Linux April 2026 — UEFI boot works on Arch out of the box. The "UEFI unstable on Arch" caveat from the previous README was a hardcoded path bug, not an actual incompatibility.
 - **USB toggle now actually disables USB** — unchecking "Enable USB Support" at launch removes the USB controllers from the VM (not just the helper script)
 - **Companion panel renamed** — `usb-hotplug.sh` is now `quickboot-settings.sh` and the window is titled **VM Session Settings**, reflecting that it now controls more than just USB
 - **Top-level menu grouped** — USB Devices / Network / Storage / VM Power
@@ -39,7 +40,7 @@ QEMU-QuickBoot is a Bash tool that simplifies virtual machine deployment using Q
 
 The companion **VM Session Settings** panel (`quickboot-settings.sh`) launches automatically alongside the VM and gives you live control over USB devices, networking, storage, and VM power state — without ever leaving the GUI.
 
-> **Note:** Supported on Debian and Ubuntu-based distributions. Arch Linux support is available but UEFI boot is currently unstable on Arch.
+> **Note:** Supported on Debian/Ubuntu and Arch-based distributions (CachyOS, EndeavourOS, Manjaro, Garuda). Both BIOS and UEFI boot are tested on Arch as of April 2026.
 
 ---
 
@@ -48,6 +49,7 @@ The companion **VM Session Settings** panel (`quickboot-settings.sh`) launches a
 - **YAD GUI** — lightweight alternative to Zenity with richer dialog support
 - **Multiple boot modes** — physical device, disk image/ISO file, or ISO + drive combination
 - **Format autodetection** — ISOs boot as CD-ROMs; `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` boot with their real format; block devices and `.img` boot raw. No more surprise corruption from forcing `format=raw` on a qcow2.
+- **Cross-distro UEFI** — OVMF firmware path is now autodetected, so UEFI boot works out of the box on Arch (`/usr/share/edk2/x64/OVMF.4m.fd`), Debian/Ubuntu, and Fedora without per-distro patches. Falls back to BIOS with a clear error dialog if no firmware is found.
 - **BIOS and UEFI** — OVMF-based UEFI support included
 - **USB Hotplug** — attach/detach USB devices to a live VM via GUI, no reboot required
 - **Dynamic RAM selection** — specify RAM per VM at launch
@@ -72,15 +74,20 @@ cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
 
-### Arch Linux *(BIOS only — UEFI unstable)*
+### Arch Linux / CachyOS / EndeavourOS / Garuda / Manjaro
 
 ```bash
-sudo pacman -Syu
-sudo pacman -S qemu-full qemu-img edk2 yad socat git
+sudo pacman -Sy
+sudo pacman -S --needed qemu-desktop edk2-ovmf yad socat git
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
+
+> **Tip for live ISOs:** if `pacman` reports gstreamer or libcbor version conflicts (common on weeks-old live media), add `--overwrite='*'` to bypass the version skew without doing a full system upgrade:
+> ```bash
+> sudo pacman -S --needed --overwrite='*' qemu-desktop edk2-ovmf yad socat git
+> ```
 
 ---
 
