@@ -8,7 +8,7 @@ A YAD-based GUI for spinning up QEMU virtual machines fast. Boot from a physical
 
 Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora & RHEL Both BIOS and UEFI. Tested as of April 2026.
 
-## What it does
+## What does the utilty do?
 
 Prompts user with yad dialogs that you through:
 
