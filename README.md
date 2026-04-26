@@ -81,7 +81,7 @@ sudo bash qemu-quickboot.sh
 
 ## [![debian](https://github.com/user-attachments/assets/d5973404-aa34-4f0e-b19c-c34aa055c297)](https://...deb-url) [.deb](https://...deb-url)
 
-## [![rhel](https://github.com/user-attachments/assets/b7e72d56-2fdc-4f38-9c1b-c23ae9400db8)](https://...rpm-url) [.rpm](https://...rpm-url)
+## [![rhel](https://github.com/user-attachments/assets/1dee9b5a-250b-45cd-887b-760c0fc3a3ec)](https://...rpm-url) [.rpm](https://...rpm-url)
 
 ## [![arch](https://github.com/user-attachments/assets/42041b5f-e8b1-4cb3-be10-1e6a05b58d2f)](https://...arch-url) [.pkg.tar.zst](https://...arch-url)
 
