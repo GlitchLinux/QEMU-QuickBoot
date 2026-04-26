@@ -73,14 +73,10 @@ cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
 
-──────────────────────────────────────────────────────────────────────────
 
 ## Install Qemu-Quickboot to system
 
-## Find installer files for your system here:
-[QEMU-QuickBoot-v1.5 Release-Page](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
-
-──────────────────────────────────────────────────────────────────────────
+## Find installer files for your system here: [QEMU-QuickBoot-v1.5 Release-Page](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
 
 ## Usage
 
