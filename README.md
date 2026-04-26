@@ -75,7 +75,9 @@ sudo bash qemu-quickboot.sh
 
 ## Installers
 
-src="https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5"
+[https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5](Releases)
+
+/releases/tag/QEMU-QuickBoot-v1.5
 
 ### Optional clipboard tools
 
@@ -164,4 +166,5 @@ Issues and PRs welcome. On the radar: multi-VM session support, ARM/aarch64 gues
 <img width="85" height="85" alt="QEMU-QuickBoot" src="https://github.com/user-attachments/assets/6ddec8b1-e5b0-4a9f-a793-b7c67b58236c" />
 
 **GLITCH LINUX**
+
 [glitchlinux.wtf](https://glitchlinux.wtf) · info@glitchlinux.com
