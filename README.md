@@ -75,13 +75,8 @@ sudo bash qemu-quickboot.sh
 
 ## Install Qemu-Quickboot to system
 
-### Installer files for your distro: 
+### Latest release - **.deb .rpm .pkg.tar.zst**
 [QEMU-QuickBoot-v1.5 Release-Page](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
-### .deb .rpm .pkg.tar.zst available
-
-### Optional clipboard tools
-
-For the "copy SSH command to clipboard" feature in the settings panel, install one of: `xclip`, `wl-clipboard`, or `xsel`. Most desktops already have at least one.
 
 ## Usage
 
@@ -104,6 +99,10 @@ ssh -p <random_port> user@localhost
 ```
 
 The port is printed to the terminal at launch. The settings panel can also copy the full command to clipboard via Network → SSH Quick-Forward.
+
+### Optional clipboard tools
+
+For the "copy SSH command to clipboard" feature in the settings panel, install one of: `xclip`, `wl-clipboard`, or `xsel`. Most desktops already have at least one.
 
 ## Boot modes
 
