@@ -12,23 +12,23 @@ This release is a major update over the original Zenity-based version, with two 
 
 ### Spring 2026 — YAD rewrite
 
-- **YAD replaces Zenity** — faster, more flexible, better-looking dialogs
-- **USB Hotplug support** — attach and detach USB devices to a running VM without restarting
-- **USB 3.0 controller** — `qemu-xhci` included by default
-- **QEMU monitor socket** — exposes `/tmp/qemu-monitor.sock` for programmatic device management
-- **Auto-launch companion panel** — settings panel starts automatically after VM boot, no second terminal needed
-- **`socat` integration** — hotplug commands sent directly to the QEMU monitor via Unix socket
+- **YAD replaces Zenity** - faster, more flexible, better-looking dialogs
+- **USB Hotplug support** - attach and detach USB devices to a running VM without restarting
+- **USB 3.0 controller** - `qemu-xhci` included by default
+- **QEMU monitor socket** - exposes `/tmp/qemu-monitor.sock` for programmatic device management
+- **Auto-launch companion panel** - settings panel starts automatically after VM boot, no second terminal needed
+- **`socat` integration** - hotplug commands sent directly to the QEMU monitor via Unix socket
 
-### April 2026 — Format autodetect, cross-distro UEFI, VM Session Settings panel
+### April 2026 - Format autodetect, cross-distro UEFI, VM Session Settings panel
 
-- **Smart boot-source handling** — ISOs now boot via `-cdrom` (not as raw drives), and `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` images are mounted with their actual format instead of being forced to `raw`. Same applies to extra disks.
-- **Cross-distro UEFI** — OVMF firmware path is now autodetected (Arch's `/usr/share/edk2/x64/OVMF.4m.fd`, Debian's `/usr/share/qemu/OVMF.fd`, Fedora's `/usr/share/edk2/ovmf/OVMF_CODE.fd`, etc.). Tested on Garuda Linux April 2026 — UEFI boot works on Arch out of the box. The "UEFI unstable on Arch" caveat from the previous README was a hardcoded path bug, not an actual incompatibility.
-- **USB toggle now actually disables USB** — unchecking "Enable USB Support" at launch removes the USB controllers from the VM (not just the helper script)
-- **Companion panel renamed** — `usb-hotplug.sh` is now `quickboot-settings.sh` and the window is titled **VM Session Settings**, reflecting that it now controls more than just USB
-- **Top-level menu grouped** — USB Devices / Network / Storage / VM Power
-- **Smart SSH forward** — view the current SSH port, add a new SSH host port live, or copy the full `ssh -p N user@localhost` command to clipboard (xclip / wl-copy / xsel auto-detected)
-- **Manual IPv4 / subnet config** — set a custom CIDR, gateway, DHCP start, and DNS for the VM. The panel queues the config and offers "Save & Restart Now" — the parent script automatically re-launches QEMU with the same drives, RAM, boot mode, and SSH port, but with the new netdev applied.
-- **VM Power sub-menu** — soft reset, ACPI shutdown, force-quit, and restart-with-pending-config, all driven over HMP
+- **Smart boot-source handling** - ISOs now boot via `-cdrom` (not as raw drives), and `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` images are mounted with their actual format instead of being forced to `raw`. Same applies to extra disks.
+- **Cross-distro UEFI** - OVMF firmware path is now autodetected (Arch's `/usr/share/edk2/x64/OVMF.4m.fd`, Debian's `/usr/share/qemu/OVMF.fd`, Fedora's `/usr/share/edk2/ovmf/OVMF_CODE.fd`, etc.). Tested on Garuda Linux April 2026 — UEFI boot works on Arch out of the box. The "UEFI unstable on Arch" caveat from the previous README was a hardcoded path bug, not an actual incompatibility.
+- **USB toggle now actually disables USB** - unchecking "Enable USB Support" at launch removes the USB controllers from the VM (not just the helper script)
+- **Companion panel renamed** - `usb-hotplug.sh` is now `quickboot-settings.sh` and the window is titled **VM Session Settings**, reflecting that it now controls more than just USB
+- **Top-level menu grouped** - USB Devices / Network / Storage / VM Power
+- **Smart SSH forward** - view the current SSH port, add a new SSH host port live, or copy the full `ssh -p N user@localhost` command to clipboard (xclip / wl-copy / xsel auto-detected)
+- **Manual IPv4 / subnet config** - set a custom CIDR, gateway, DHCP start, and DNS for the VM. The panel queues the config and offers "Save & Restart Now" — the parent script automatically re-launches QEMU with the same drives, RAM, boot mode, and SSH port, but with the new netdev applied.
+- **VM Power sub-menu** - soft reset, ACPI shutdown, force-quit, and restart-with-pending-config, all driven over HMP
 
 ---
 
