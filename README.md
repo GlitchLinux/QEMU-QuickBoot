@@ -4,7 +4,7 @@ A YAD-based GUI for spinning up QEMU virtual machines fast. Boot from a physical
 
 <img width="1920" height="1080" alt="Screenshot_20260415_161233" src="https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b" />
 
-Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, and Manjaro. Both BIOS and UEFI. Tested on Garuda and Debian as of April 2026.
+Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora & RHEL Both BIOS and UEFI. Tested as of April 2026.
 
 ## What it does
 
@@ -33,7 +33,7 @@ The big rewrite swapped Zenity for YAD and added a companion panel with USB hotp
 
 <img width="1305" height="801" alt="hotplug-window-3" src="https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" />
 
-## Install
+## Download & Execute
 
 ### Debian / Ubuntu
 
@@ -62,6 +62,20 @@ sudo pacman -S --needed --overwrite='*' qemu-desktop edk2-ovmf yad socat git
 ```
 
 That bypasses the version skew without needing a full system upgrade.
+
+### Fedora / CentOS / RHEL / Alma / Rocky
+
+```bash
+sudo dnf update
+sudo dnf install -y qemu-system-x86 qemu-img edk2-ovmf yad socat usbutils xclip xdpyinfo git
+git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
+cd QEMU-QuickBoot
+sudo bash qemu-quickboot.sh
+```
+
+## Installers
+
+src="https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5"
 
 ### Optional clipboard tools
 
