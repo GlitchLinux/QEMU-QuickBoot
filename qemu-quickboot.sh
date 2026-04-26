@@ -48,6 +48,33 @@ detect_format() {
     esac
 }
 
+# --- Detect OVMF (UEFI firmware) location across distros ---
+# Returns the first existing path from a list of well-known locations.
+# Order matters: modern Arch first, then Debian/Ubuntu, then Fedora.
+detect_ovmf() {
+    local candidates=(
+        # Arch — modern edk2 layout (edk2-ovmf package)
+        "/usr/share/edk2/x64/OVMF.4m.fd"
+        "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
+        "/usr/share/edk2-ovmf/x64/OVMF.4m.fd"
+        "/usr/share/edk2-ovmf/x64/OVMF_CODE.4m.fd"
+        # Older Arch layouts
+        "/usr/share/edk2-ovmf/x64/OVMF.fd"
+        "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
+        "/usr/share/ovmf/x64/OVMF.fd"
+        # Debian / Ubuntu — legacy single-file (ovmf package)
+        "/usr/share/qemu/OVMF.fd"
+        "/usr/share/OVMF/OVMF_CODE.fd"
+        # Fedora
+        "/usr/share/edk2/ovmf/OVMF_CODE.fd"
+    )
+    local f
+    for f in "${candidates[@]}"; do
+        [ -f "$f" ] && { echo "$f"; return 0; }
+    done
+    return 1
+}
+
 # --- Helper: prompt for boot mode + USB hotplug toggle in a single form ---
 # Sets global variables: boot_mode, usb_hotplug_enabled
 # Returns 1 if user cancels.
@@ -592,7 +619,18 @@ while true; do
 
         bios_args=""
         if [ "$boot_mode" = "UEFI" ]; then
-            bios_args="-bios /usr/share/qemu/OVMF.fd"
+            ovmf_path=$(detect_ovmf)
+            if [ -z "$ovmf_path" ]; then
+                yad --error $YAD_ICON \
+                    --title="OVMF firmware not found" \
+                    --width="$bigger_width" --height="$smaller_height" \
+                    --text="UEFI firmware (OVMF) not found in any standard location.\n\nInstall it for your distro:\n  Debian/Ubuntu : sudo apt install ovmf\n  Arch / CachyOS: sudo pacman -S edk2-ovmf\n  Fedora        : sudo dnf install edk2-ovmf\n\nFalling back to BIOS for this VM." \
+                    --button="OK:0"
+                boot_mode="BIOS"
+            else
+                bios_args="-bios $ovmf_path"
+                echo "OVMF firmware: $ovmf_path"
+            fi
         fi
 
         qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M $primary_args $usb_args -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait $bios_args $network_args $extra_disks"
