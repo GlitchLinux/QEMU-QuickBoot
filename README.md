@@ -33,6 +33,14 @@ The big rewrite swapped Zenity for YAD and added a companion panel with USB hotp
 
 <img width="1305" height="801" alt="hotplug-window-3" src="https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" />
 
+## [QEMU-QuickBoot-v1.5 ReleasePage](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
+
+## [![debian](https://github.com/user-attachments/assets/03adedd6-ac80-4cfc-961a-bb22315eaf9d)](https://...deb-url)![Ubuntu](https://github.com/user-attachments/assets/fa705583-84ba-46d6-8601-9e22bb182ff7)![Mint](https://github.com/user-attachments/assets/4955d558-791a-4670-a6b1-0090e5566c89) [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-v1.5-1_amd64.deb)
+
+## [![rhel](https://github.com/user-attachments/assets/10f6e927-68f9-45e2-a886-549b333587f2)](https://...rpm-url)![cent](https://github.com/user-attachments/assets/80e898fa-4861-4a94-9860-355c1ad43520)![fedora](https://github.com/user-attachments/assets/924dbe3e-d958-4405-83af-e92f0d630b75) [.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1.fc41.noarch.rpm)
+
+## [![rhel](https://github.com/user-attachments/assets/0975c6d8-d100-4c5d-9e17-9177aecfc988)](https://...rpm-url)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
+
 ## Download & Execute
 
 ### Debian / Ubuntu
@@ -73,7 +81,6 @@ cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
 
-## Installers for your system
 ## [QEMU-QuickBoot-v1.5 ReleasePage](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
 
 ## [![debian](https://github.com/user-attachments/assets/03adedd6-ac80-4cfc-961a-bb22315eaf9d)](https://...deb-url)![Ubuntu](https://github.com/user-attachments/assets/fa705583-84ba-46d6-8601-9e22bb182ff7)![Mint](https://github.com/user-attachments/assets/4955d558-791a-4670-a6b1-0090e5566c89) [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-v1.5-1_amd64.deb)
