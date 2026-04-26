@@ -8,7 +8,7 @@ YAD GUI Interface for quick and easy deployment of QEMU Virtual Machines
 
 Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora & RHEL Both BIOS and UEFI. Tested as of April 2026.
 
-## What does the utilty do?
+## What does the utility do?
 
 Prompts user with yad dialogs that you through:
 
