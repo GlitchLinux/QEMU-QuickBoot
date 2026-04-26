@@ -77,6 +77,7 @@ sudo bash qemu-quickboot.sh
 
 ### Installer files for your distro: 
 [QEMU-QuickBoot-v1.5 Release-Page](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
+### .deb .rpm .pkg.tar.zst available
 
 ### Optional clipboard tools
 
