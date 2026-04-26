@@ -81,7 +81,10 @@ sudo bash qemu-quickboot.sh
 
 ## [![debian](https://github.com/user-attachments/assets/290c1c7b-7300-4cd8-aeeb-6b7b514fb6a4)](https://...deb-url)![Ubuntu](https://github.com/user-attachments/assets/fa705583-84ba-46d6-8601-9e22bb182ff7)![Mint](https://github.com/user-attachments/assets/4955d558-791a-4670-a6b1-0090e5566c89) [.deb](https://...deb-url)
 
-## [![rhel](https://github.com/user-attachments/assets/e19c5364-84cf-4bf9-9869-b09b14ad7174)](https://...rpm-url) [.rpm](https://...rpm-url)
+<img width="70" height="70" alt="os_fedora" src="" />
+
+
+## [![rhel](https://github.com/user-attachments/assets/10f6e927-68f9-45e2-a886-549b333587f2)](https://...rpm-url)![cent](https://github.com/user-attachments/assets/80e898fa-4861-4a94-9860-355c1ad43520)![fedora](https://github.com/user-attachments/assets/924dbe3e-d958-4405-83af-e92f0d630b75) [.rpm](https://...rpm-url)
 
 ## [![arch](https://github.com/user-attachments/assets/42041b5f-e8b1-4cb3-be10-1e6a05b58d2f)](https://...arch-url) [.pkg.tar.zst](https://...arch-url)
 
