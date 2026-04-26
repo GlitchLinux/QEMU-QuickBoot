@@ -78,7 +78,7 @@ sudo bash qemu-quickboot.sh
 
 ## Installers for your system_
 ## [QEMU-QuickBoot-v1.5 ReleasePage](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
-## [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-v1.5-1_amd64.deb)[.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1.fc41.noarch.rpm)
+## [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-v1.5-1_amd64.deb) [.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1.fc41.noarch.rpm) [.pkg.tar.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
 ## Usage
 
 ```bash
