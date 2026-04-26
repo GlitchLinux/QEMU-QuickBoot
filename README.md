@@ -75,9 +75,7 @@ sudo bash qemu-quickboot.sh
 
 ## Installers
 
-[https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5](Releases)
-
-/releases/tag/QEMU-QuickBoot-v1.5
+[Installer Files - QEMU-QuickBoot-v1.5](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
 
 ### Optional clipboard tools
 
