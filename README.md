@@ -8,12 +8,12 @@ Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora & R
 
 ## What it does
 
-You run `qemu-quickboot.sh`, a few yad dialogs walk you through:
+Prompts user with yad dialogs that you through:
 
 1. Pick a boot source (a connected device, a disk image, or an ISO + drive combo)
-2. Optionally attach extra disks
-3. BIOS or UEFI
-4. RAM size
+2. Optionally attach extra disks (phydical or virtual)
+3. Select Firmware type (BIOS or UEFI)
+4. Set RAM size (Manually in MB)
 
 Then it launches QEMU with KVM acceleration, USB 3.0, and SSH port forwarding on a random host port. A companion panel called **VM Session Settings** opens alongside the VM so you can hotplug USB devices, add port forwards, change the guest's IPv4 subnet, or shut the VM down cleanly. All without restarting QEMU.
 
