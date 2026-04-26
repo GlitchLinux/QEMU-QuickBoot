@@ -1,6 +1,6 @@
 # QEMU-QuickBoot
 
-A YAD-based GUI for spinning up QEMU virtual machines fast. Boot from a physical disk, an image file, or an ISO with a few clicks. Designed for the cases where typing the qemu-system-x86_64 command line is friction but firing up virt-manager is overkill.
+YAD GUI Interface for quick and easy deployment of QEMU Virtual Machines
 
 <img width="1920" height="1080" alt="Screenshot_20260415_161233" src="https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b" />
 
