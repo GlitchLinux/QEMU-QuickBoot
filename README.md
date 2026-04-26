@@ -83,8 +83,7 @@ sudo bash qemu-quickboot.sh
 
 ## [![rhel](https://github.com/user-attachments/assets/10f6e927-68f9-45e2-a886-549b333587f2)](https://...rpm-url)![cent](https://github.com/user-attachments/assets/80e898fa-4861-4a94-9860-355c1ad43520)![fedora](https://github.com/user-attachments/assets/924dbe3e-d958-4405-83af-e92f0d630b75) [.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1.fc41.noarch.rpm)
 
-## [![arch](https://github.com/user-attachments/assets/cca6658e-6b6f-447e-905e-5bfb3b758fb6)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
-
+## [![rhel](https://github.com/user-attachments/assets/0975c6d8-d100-4c5d-9e17-9177aecfc988)](https://...rpm-url)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
 
 
 
