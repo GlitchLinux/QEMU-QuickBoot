@@ -43,7 +43,6 @@ The big rewrite swapped Zenity for YAD and added a companion panel with USB hotp
 ### For Arch Based Distros: 
 ## [![rhel](https://github.com/user-attachments/assets/0975c6d8-d100-4c5d-9e17-9177aecfc988)](https://...rpm-url)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
 
-## Clone Repo and execute manually
 ### Test the utility without installing it:
 
 ### Debian / Ubuntu
