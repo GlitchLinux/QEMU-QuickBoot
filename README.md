@@ -3,7 +3,9 @@
 A YAD-based GUI for spinning up QEMU virtual machines fast. Boot from a physical disk, an image file, or an ISO with a few clicks. Designed for the cases where typing the qemu-system-x86_64 command line is friction but firing up virt-manager is overkill.
 
 <img width="1920" height="1080" alt="Screenshot_20260415_161233" src="https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b" />
+
 ---
+
 Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora & RHEL Both BIOS and UEFI. Tested as of April 2026.
 
 ## What it does
