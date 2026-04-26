@@ -1,80 +1,51 @@
 # QEMU-QuickBoot
 
-**QEMU-QuickBoot** is a lightweight YAD-based GUI for rapid deployment of QEMU virtual machines — boot from physical devices, disk images, or ISO files in seconds, directly from your desktop.
+A YAD-based GUI for spinning up QEMU virtual machines fast. Boot from a physical disk, an image file, or an ISO with a few clicks. Designed for the cases where typing the qemu-system-x86_64 command line is friction but firing up virt-manager is overkill.
 
 <img width="1920" height="1080" alt="Screenshot_20260415_161233" src="https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b" />
 
----
+Works on Debian, Ubuntu, Arch, CachyOS, EndeavourOS, Garuda, and Manjaro. Both BIOS and UEFI. Tested on Garuda and Debian as of April 2026.
 
-## What's New in 2026
+## What it does
 
-This release is a major update over the original Zenity-based version, with two waves of changes.
+You run `qemu-quickboot.sh`, a few yad dialogs walk you through:
 
-### Spring 2026 — YAD rewrite
+1. Pick a boot source (a connected device, a disk image, or an ISO + drive combo)
+2. Optionally attach extra disks
+3. BIOS or UEFI
+4. RAM size
 
-- **YAD replaces Zenity** - faster, more flexible, better-looking dialogs
-- **USB Hotplug support** - attach and detach USB devices to a running VM without restarting
-- **USB 3.0 controller** - `qemu-xhci` included by default
-- **QEMU monitor socket** - exposes `/tmp/qemu-monitor.sock` for programmatic device management
-- **Auto-launch companion panel** - settings panel starts automatically after VM boot, no second terminal needed
-- **`socat` integration** - hotplug commands sent directly to the QEMU monitor via Unix socket
+Then it launches QEMU with KVM acceleration, USB 3.0, and SSH port forwarding on a random host port. A companion panel called **VM Session Settings** opens alongside the VM so you can hotplug USB devices, add port forwards, change the guest's IPv4 subnet, or shut the VM down cleanly. All without restarting QEMU.
 
-### April 2026 - Format autodetect, cross-distro UEFI, VM Session Settings panel
+The whole pre-boot flow takes about 15 seconds.
 
-- **Smart boot-source handling** - ISOs now boot via `-cdrom` (not as raw drives), and `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` images are mounted with their actual format instead of being forced to `raw`. Same applies to extra disks.
-- **Cross-distro UEFI** - OVMF firmware path is now autodetected (Arch's `/usr/share/edk2/x64/OVMF.4m.fd`, Debian's `/usr/share/qemu/OVMF.fd`, Fedora's `/usr/share/edk2/ovmf/OVMF_CODE.fd`, etc.). Tested on Garuda Linux April 2026 — UEFI boot works on Arch out of the box. The "UEFI unstable on Arch" caveat from the previous README was a hardcoded path bug, not an actual incompatibility.
-- **USB toggle now actually disables USB** - unchecking "Enable USB Support" at launch removes the USB controllers from the VM (not just the helper script)
-- **Companion panel renamed** - `usb-hotplug.sh` is now `quickboot-settings.sh` and the window is titled **VM Session Settings**, reflecting that it now controls more than just USB
-- **Top-level menu grouped** - USB Devices / Network / Storage / VM Power
-- **Smart SSH forward** - view the current SSH port, add a new SSH host port live, or copy the full `ssh -p N user@localhost` command to clipboard (xclip / wl-copy / xsel auto-detected)
-- **Manual IPv4 / subnet config** - set a custom CIDR, gateway, DHCP start, and DNS for the VM. The panel queues the config and offers "Save & Restart Now" — the parent script automatically re-launches QEMU with the same drives, RAM, boot mode, and SSH port, but with the new netdev applied.
-- **VM Power sub-menu** - soft reset, ACPI shutdown, force-quit, and restart-with-pending-config, all driven over HMP
+## What's new in 2026
 
----
+The big rewrite swapped Zenity for YAD and added a companion panel with USB hotplugging, network controls, and storage hotplug. The April 2026 update added:
+
+- **Format autodetection.** ISOs boot via `-cdrom`. `qcow2`, `vmdk`, `vdi`, `vhdx`, `vhd` boot with their actual format. Block devices boot raw. The previous version forced `format=raw` on everything, which silently corrupted qcow2 images.
+- **Cross-distro UEFI.** OVMF firmware is autodetected. Works on Arch (`/usr/share/edk2/x64/OVMF.4m.fd`), Debian (`/usr/share/qemu/OVMF.fd`), and Fedora without per-distro patches. The previous "UEFI unstable on Arch" warning in the README was a hardcoded path bug, not an actual incompatibility.
+- **USB toggle actually works now.** Unchecking "Enable USB Support" at launch removes the USB controllers from the VM, not just the helper script.
+- **Companion panel renamed** from `usb-hotplug.sh` to `quickboot-settings.sh`. The window is titled "VM Session Settings" because it does more than USB now.
+- **Smart SSH forward.** View the current port, add a new one live, or copy `ssh -p N user@localhost` to clipboard (xclip / wl-copy / xsel).
+- **Manual IPv4 config.** Set a custom CIDR, gateway, DHCP start, and DNS. QEMU can't change netdev parameters on a running VM, so the panel queues the change and offers "Save & Restart Now". The parent script re-launches QEMU with the same drives, RAM, boot mode, and SSH port, just with the new network.
+- **VM power controls.** Soft reset, ACPI shutdown, force-quit, restart-with-pending-config. All over HMP.
 
 <img width="1305" height="801" alt="hotplug-window-3" src="https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" />
 
-## Overview
-
-QEMU-QuickBoot is a Bash tool that simplifies virtual machine deployment using QEMU. It provides a clean GUI workflow for selecting boot sources, RAM, and firmware — then launches the VM with sensible defaults including KVM acceleration, USB 3.0, network forwarding, and SSH access.
-
-The companion **VM Session Settings** panel (`quickboot-settings.sh`) launches automatically alongside the VM and gives you live control over USB devices, networking, storage, and VM power state — without ever leaving the GUI.
-
-> **Note:** Supported on Debian/Ubuntu and Arch-based distributions (CachyOS, EndeavourOS, Manjaro, Garuda). Both BIOS and UEFI boot are tested on Arch as of April 2026.
-
----
-
-## Key Features
-
-- **YAD GUI** — lightweight alternative to Zenity with richer dialog support
-- **Multiple boot modes** — physical device, disk image/ISO file, or ISO + drive combination
-- **Format autodetection** — ISOs boot as CD-ROMs; `qcow2`/`vmdk`/`vdi`/`vhdx`/`vhd` boot with their real format; block devices and `.img` boot raw. No more surprise corruption from forcing `format=raw` on a qcow2.
-- **Cross-distro UEFI** — OVMF firmware path is now autodetected, so UEFI boot works out of the box on Arch (`/usr/share/edk2/x64/OVMF.4m.fd`), Debian/Ubuntu, and Fedora without per-distro patches. Falls back to BIOS with a clear error dialog if no firmware is found.
-- **BIOS and UEFI** — OVMF-based UEFI support included
-- **USB Hotplug** — attach/detach USB devices to a live VM via GUI, no reboot required
-- **Dynamic RAM selection** — specify RAM per VM at launch
-- **SSH port forwarding** — random port assigned per session, persists across in-session restarts
-- **Live IPv4/subnet config** — change the VM's network on the fly with a clean restart
-- **KVM acceleration** — `-enable-kvm -cpu host` by default for near-native performance
-- **Extra disk support** — attach additional virtual or physical disks at boot time, each with its own auto-detected format
-
-<img width="913" height="684" alt="Screenshot_20260415_162458-1" src="https://github.com/user-attachments/assets/34c5fd09-aeb7-4539-a1de-3cd62291052a" />
-
----
-
-## Installation
+## Install
 
 ### Debian / Ubuntu
 
 ```bash
 sudo apt update
-sudo apt install qemu-system qemu-utils qemu-system-gui ovmf yad socat wget git orchis-gtk-theme -y
+sudo apt install qemu-system qemu-utils qemu-system-gui ovmf yad socat wget git -y
 git clone https://github.com/GlitchLinux/QEMU-QuickBoot.git
 cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
 
-### Arch Linux / CachyOS / EndeavourOS / Garuda / Manjaro
+### Arch / CachyOS / EndeavourOS / Garuda / Manjaro
 
 ```bash
 sudo pacman -Sy
@@ -84,29 +55,17 @@ cd QEMU-QuickBoot
 sudo bash qemu-quickboot.sh
 ```
 
-> **Tip for live ISOs:** if `pacman` reports gstreamer or libcbor version conflicts (common on weeks-old live media), add `--overwrite='*'` to bypass the version skew without doing a full system upgrade:
-> ```bash
-> sudo pacman -S --needed --overwrite='*' qemu-desktop edk2-ovmf yad socat git
-> ```
+If you're on a live ISO and pacman complains about gstreamer or libcbor version conflicts (CachyOS and Garuda live media tend to lag a few weeks behind the rolling repos), add `--overwrite='*'`:
 
----
+```bash
+sudo pacman -S --needed --overwrite='*' qemu-desktop edk2-ovmf yad socat git
+```
 
-## Dependencies
+That bypasses the version skew without needing a full system upgrade.
 
-| Package | Purpose |
-|---|---|
-| `qemu-system` | Core VM engine |
-| `qemu-utils` | Disk image tools |
-| `qemu-system-gui` | QEMU display support |
-| `ovmf` | UEFI firmware |
-| `yad` | GUI dialogs |
-| `socat` | QEMU monitor socket communication |
-| `wget` | Downloads |
-| `orchis-gtk-theme` | Dark GTK theme |
+### Optional clipboard tools
 
-Optional but recommended for SSH-command-copy in the settings panel: `xclip`, `wl-copy`, or `xsel`.
-
----
+For the "copy SSH command to clipboard" feature in the settings panel, install one of: `xclip`, `wl-clipboard`, or `xsel`. Most desktops already have at least one.
 
 ## Usage
 
@@ -114,100 +73,77 @@ Optional but recommended for SSH-command-copy in the settings panel: `xclip`, `w
 sudo bash qemu-quickboot.sh
 ```
 
-The VM Session Settings panel (`quickboot-settings.sh`) launches automatically a few seconds after the VM boots, provided USB support was enabled at launch. Both scripts must be in the same directory.
+The settings panel auto-launches a few seconds after the VM boots, as long as USB support was enabled at launch. Both scripts must be in the same directory.
 
-You can also run the panel manually at any time while a VM is active:
+You can also run the panel manually any time a VM is alive:
 
 ```bash
 bash quickboot-settings.sh
 ```
 
-### SSH into the VM
+To SSH into the guest:
 
 ```bash
 ssh -p <random_port> user@localhost
 ```
 
-The assigned port is printed to the terminal at launch. The Settings panel (Network → SSH Quick-Forward) can also copy the full command to your clipboard.
+The port is printed to the terminal at launch. The settings panel can also copy the full command to clipboard via Network → SSH Quick-Forward.
 
----
+## Boot modes
 
-## Boot Modes
+**Boot from connected device.** Pick a real disk by `/dev/sdX` from a list of attached drives. Useful for testing a USB live distro or rescuing a crashed system without rebooting.
 
-### 1. Boot from Connected Device
-Boot directly from a USB drive, SD card, or internal/external disk. Useful for testing bootable media without rebooting the host.
+**Boot from file.** Point at an ISO, IMG, QCOW2, VMDK, VDI, VHD, or VHDX. The format is autodetected. ISOs boot as a CD-ROM; the rest boot as drives with their native format.
 
-### 2. Boot from File
-Boot from `.iso`, `.img`, `.qcow2`, `.vmdk`, `.vdi`, `.vhd`, or `.vhdx`. The format is autodetected — ISOs boot as a CD-ROM, everything else boots as a drive with its native format.
+**ISO & Drive.** Combine both: an ISO as virtual DVD plus a separate disk (virtual or physical). This is the OS-install workflow.
 
-### 3. ISO & Drive
-Combine an ISO as a virtual DVD with a separate virtual or physical disk — ideal for OS installations inside the VM.
+## VM Session Settings panel
 
----
+Four sections. Everything is driven over the QEMU monitor socket at `/tmp/qemu-monitor.sock`.
 
-## VM Session Settings Panel
+**USB Devices.** Attach (picks from `lsusb`), detach (lists what you've attached this session), and a session log of everything that's been hotplugged.
 
-The companion panel (`quickboot-settings.sh`) gives you live control over a running VM. It launches automatically alongside the VM and is organized into four sections.
+**Network.** View the SLIRP defaults and live `info usernet` output. Add or remove generic TCP/UDP port forwards. The SSH Quick-Forward sub-menu shows the current SSH port, copies the ssh command to clipboard, or adds a new host port live. The IPv4/Subnet Config form lets you override network CIDR, gateway, DHCP start, and DNS, then triggers a clean restart with the same drives, RAM, boot mode, and SSH port.
 
-### USB Devices
+**Storage.** Hotplug a virtual disk file or physical block device into the running VM. Format is autodetected for files; physical devices are raw. Removing a hot-added device prompts you to unmount first inside the guest. Also shows the full `info block` layout.
 
-- **Attach** — pick from a live `lsusb` list and hotplug the device into the VM
-- **Detach** — list currently attached devices and detach one cleanly
-- **Session Device Log** — see everything attached/detached this session
+**VM Power.** `system_reset` (hard reboot), `system_powerdown` (ACPI shutdown), restart with pending config, or force-quit (HMP `quit`). Force-quit clears any pending restart so the parent script doesn't relaunch.
 
-### Network
+## What it's good for
 
-- **View Network Info** — SLIRP defaults plus live `info usernet` output
-- **SSH Quick-Forward** — view current SSH port, copy `ssh -p N user@localhost` to clipboard, or add a new SSH host port live
-- **Add Port Forward** / **Remove Port Forward** — generic TCP/UDP port redirection
-- **IPv4 / Subnet Config** — override the SLIRP subnet (network CIDR, gateway, DHCP start, DNS). QEMU can't change netdev parameters on a live VM, so the panel queues the new config and triggers a clean restart with the same drives, RAM, boot mode, and SSH port — only the network changes.
+- Test a live ISO without rebooting
+- Install an OS onto a USB stick from inside a VM
+- Try out bootable media before writing it to real hardware
+- Spin up a throwaway VM for testing
+- Hotplug a USB stick, smartcard reader, or external drive into a running guest
+- Stress-test a guest's reaction to network changes (custom subnets, gateways, DNS)
 
-### Storage
+## What it isn't
 
-- **Add storage device** — hotplug a virtual disk file or physical block device. Format is autodetected for virtual disks; physical devices use raw.
-- **Remove storage device** — detach a previously hot-added device (with an unmount-first reminder)
-- **View current storage layout** — see hot-added devices plus full `info block` output
+Not a VirtualBox replacement. Not a VM library, not a snapshot manager, not a multi-VM hypervisor. One QEMU instance per launch, by design.
 
-### VM Power
+The launch flow is short on purpose. Anything that adds friction goes into the settings panel, which only opens after the VM is already running. The two scripts together total about 1700 lines of bash and have no daemon, no config file, and no state outside `/tmp`.
 
-- **Send Reset** — `system_reset` (hard reboot)
-- **Send ACPI Shutdown** — `system_powerdown` (graceful)
-- **Restart VM (apply pending config)** — re-launch with queued IPv4/network changes
-- **Force Quit VM** — immediate `quit` over HMP, discards any pending restart
+## Dependencies
 
----
+| Package | What it's for |
+|---|---|
+| `qemu-system-x86_64` | The VM itself |
+| `qemu-img` | Disk image utilities |
+| `ovmf` / `edk2-ovmf` | UEFI firmware |
+| `yad` | All the GUI dialogs |
+| `socat` | Talking to the QEMU monitor socket |
+| `git` | Cloning this repo |
 
-## Use Cases
-
-- Boot and test any Linux live distro or WinPE ISO without rebooting the host
-- Install an OS to a USB drive or SD card from within a VM
-- Test bootable media before writing to hardware
-- Deploy rescue tools to a crashed drive without touching the host system
-- Rapidly spin up throwaway VMs for testing and development
-- Hotplug USB storage, smartcard readers, or other devices into a live VM
-- Test how a guest reacts to changing network configurations (custom subnets, gateways, DNS)
-
----
-
-## Design Philosophy
-
-QEMU-QuickBoot is **not** a VirtualBox/VMware/virt-manager replacement. It's a `qemu-system-x86_64` invocation that you can drive with a mouse — for the cases where typing the command line by hand is friction, but spinning up a managed VM is overkill.
-
-The pre-boot path is intentionally short (sub-20-second boot from prompt to running VM). Anything that adds depth — IPv4 config, port forwards, storage hotplug — lives in the **VM Session Settings** panel that opens *after* the VM is already running. This keeps the launch flow fast while still letting you tune the VM in flight.
-
-The tool deliberately does not aim to be a persistent VM library, a snapshot manager, or a multi-VM hypervisor. One QEMU instance per QuickBoot, by design.
-
----
+Optional: `xclip`, `wl-clipboard`, or `xsel` for the SSH-copy feature.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
+MIT. See [LICENSE](LICENSE).
 
 ## Contributing
 
-Issues and pull requests welcome. Multi-VM session support, ARM/aarch64 boot, and headless smoke-test modes are on the radar for future releases.
+Issues and PRs welcome. On the radar: multi-VM session support, ARM/aarch64 guest boot, and a headless smoke-test mode.
 
 ---
 
@@ -215,5 +151,3 @@ Issues and pull requests welcome. Multi-VM session support, ARM/aarch64 boot, an
 
 **GLITCH LINUX**
 [glitchlinux.wtf](https://glitchlinux.wtf) · info@glitchlinux.com
-
-*Happy QuickBoot!*
