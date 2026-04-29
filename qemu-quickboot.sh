@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # QEMU QuickBoot — main launcher (uses YAD for GUI dialogs)
-# Requires: yad, qemu-system-x86_64, socat
+# Requires: yad, qemu-system-x86_64 or qemu-system-aarch64, socat
 # Companion script: quickboot-settings.sh (VM Session Settings panel)
 #
 # 2026 update — applied via review:
@@ -26,6 +26,26 @@ SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 ICON="$SCRIPT_DIR/qemu-quickboot.png"
 YAD_ICON=""
 [ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
+
+# --- Host architecture autodetection -----------------------------------------
+# Sets QEMU_BIN and QEMU_MACHINE_ARGS based on `uname -m` so the launcher
+# works on both x86_64 and aarch64 hosts. Anything else is unsupported.
+HOST_ARCH="$(uname -m)"
+case "$HOST_ARCH" in
+    x86_64|amd64)
+        QEMU_BIN="qemu-system-x86_64"
+        QEMU_MACHINE_ARGS="-enable-kvm -cpu host"
+        ;;
+    aarch64|arm64)
+        QEMU_BIN="qemu-system-aarch64"
+        QEMU_MACHINE_ARGS="-machine virt -enable-kvm -cpu host"
+        ;;
+    *)
+        echo "Unsupported architecture: $HOST_ARCH" >&2
+        exit 1
+        ;;
+esac
+export QEMU_BIN QEMU_MACHINE_ARGS
 
 extra_disks=""
 usb_hotplug_enabled=1
@@ -52,22 +72,39 @@ detect_format() {
 # Returns the first existing path from a list of well-known locations.
 # Order matters: modern Arch first, then Debian/Ubuntu, then Fedora.
 detect_ovmf() {
-    local candidates=(
-        # Arch — modern edk2 layout (edk2-ovmf package)
-        "/usr/share/edk2/x64/OVMF.4m.fd"
-        "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
-        "/usr/share/edk2-ovmf/x64/OVMF.4m.fd"
-        "/usr/share/edk2-ovmf/x64/OVMF_CODE.4m.fd"
-        # Older Arch layouts
-        "/usr/share/edk2-ovmf/x64/OVMF.fd"
-        "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
-        "/usr/share/ovmf/x64/OVMF.fd"
-        # Debian / Ubuntu — legacy single-file (ovmf package)
-        "/usr/share/qemu/OVMF.fd"
-        "/usr/share/OVMF/OVMF_CODE.fd"
-        # Fedora
-        "/usr/share/edk2/ovmf/OVMF_CODE.fd"
-    )
+    local candidates=()
+    # Choose firmware candidates based on host architecture.
+    if [ "${HOST_ARCH:-$(uname -m)}" = "aarch64" ] || [ "${HOST_ARCH:-}" = "arm64" ]; then
+        candidates=(
+            # Debian / Ubuntu — qemu-efi-aarch64 package
+            "/usr/share/AAVMF/AAVMF_CODE.fd"
+            "/usr/share/AAVMF/AAVMF_CODE.ms.fd"
+            # Fedora / RHEL — edk2-aarch64
+            "/usr/share/edk2/aarch64/QEMU_EFI.fd"
+            "/usr/share/edk2/aarch64/QEMU_EFI-silent-pflash.raw"
+            # Arch — edk2-armvirt
+            "/usr/share/edk2-armvirt/aarch64/QEMU_EFI.fd"
+            # Generic
+            "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"
+        )
+    else
+        candidates=(
+            # Arch — modern edk2 layout (edk2-ovmf package)
+            "/usr/share/edk2/x64/OVMF.4m.fd"
+            "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
+            "/usr/share/edk2-ovmf/x64/OVMF.4m.fd"
+            "/usr/share/edk2-ovmf/x64/OVMF_CODE.4m.fd"
+            # Older Arch layouts
+            "/usr/share/edk2-ovmf/x64/OVMF.fd"
+            "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
+            "/usr/share/ovmf/x64/OVMF.fd"
+            # Debian / Ubuntu — legacy single-file (ovmf package)
+            "/usr/share/qemu/OVMF.fd"
+            "/usr/share/OVMF/OVMF_CODE.fd"
+            # Fedora
+            "/usr/share/edk2/ovmf/OVMF_CODE.fd"
+        )
+    fi
     local f
     for f in "${candidates[@]}"; do
         [ -f "$f" ] && { echo "$f"; return 0; }
@@ -633,7 +670,7 @@ while true; do
             fi
         fi
 
-        qemu_command="qemu-system-x86_64 -enable-kvm -cpu host -smp 4 -m ${ram_size}M $primary_args $usb_args -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait $bios_args $network_args $extra_disks"
+        qemu_command="$QEMU_BIN $QEMU_MACHINE_ARGS -smp 4 -m ${ram_size}M $primary_args $usb_args -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait $bios_args $network_args $extra_disks"
 
         echo "Running: $qemu_command"
         echo "SSH port forwarding: localhost:${random_port} -> VM:22"
