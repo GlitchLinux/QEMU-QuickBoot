@@ -1,6 +1,6 @@
 # QEMU-QuickBoot
 
-**YAD GUI for fast, frictionless QEMU virtual machines.**
+**YAD GUI for rapid deployment of QEMU virtual machines.**
 
 [![QEMU-QuickBoot main interface](https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b)](https://github.com/user-attachments/assets/a1e188b9-7b9e-4bd7-9938-ef6c28421b7b)
 
