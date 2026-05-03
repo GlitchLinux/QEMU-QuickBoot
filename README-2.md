@@ -15,7 +15,7 @@ A few `yad` dialogs configure a virtual machine and launch it. The whole pre-boo
 **1. Pick a boot source** — a connected device, a disk image, or an ISO + drive combo.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/REPLACE-bootmode" alt="Select VM Boot Source dialog" width="460">
+  <img width="459" height="268" alt="bootmode" src="https://github.com/user-attachments/assets/4f71d330-3441-4516-b1cd-d119344e1ac7" />
 </p>
 
 **2. Optionally attach extra disks** (physical or virtual).
