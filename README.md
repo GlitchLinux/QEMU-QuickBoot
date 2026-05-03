@@ -120,7 +120,6 @@ For the "copy SSH command to clipboard" feature, install one of: `xclip`, `wl-cl
 ## VM Session Settings panel
 
 <p align="center">
-  <img width="300" alt="ipv4" src="https://github.com/user-attachments/assets/6a92825f-2626-4d90-9b42-e39421f14ead" />
   <img width="260" alt="USB Devices submenu" src="https://github.com/user-attachments/assets/9971a09e-cbde-47ef-8ed5-cb6a65d90a31" />
   <img width="280" alt="Network submenu with SSH host port" src="https://github.com/user-attachments/assets/ef6fe135-321f-49d3-9598-d42e3cc367d3" />
   <img width="220" alt="Boot Mode firmware and USB toggle" src="https://github.com/user-attachments/assets/68567ef9-39dd-4124-bf82-2d1c29ef2c9c" />
