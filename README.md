@@ -31,7 +31,7 @@ The big rewrite earlier in 2026 swapped Zenity for YAD and introduced the compan
 - **Manual IPv4 config.** Set a custom CIDR, gateway, DHCP start, and DNS. QEMU can't change netdev parameters on a running VM, so the panel queues the change and offers "Save & Restart Now". The parent script re-launches QEMU with the same drives, RAM, boot mode, and SSH port — just with the new network.
 - **VM power controls.** Soft reset, ACPI shutdown, force-quit, restart-with-pending-config. All over HMP.
 
-[![VM Session Settings panel](https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb)](https://github.com/user-attachments/assets/dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb)
+<img width="1180" height="685" alt="578569244-dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" src="https://github.com/user-attachments/assets/6c8eaa37-9ddb-4dd4-b2ca-06cc2a976a83" />
 
 ## [QEMU-QuickBoot-v1.5 Installer](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
 ### For Debian Based Distros:
