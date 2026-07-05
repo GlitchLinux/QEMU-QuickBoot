@@ -49,6 +49,7 @@ export QEMU_BIN QEMU_MACHINE_ARGS
 
 extra_disks=""
 usb_hotplug_enabled=1
+headless_enabled=0
 
 # --- Detect QEMU drive format from path or block device ---
 # Block devices and unknown extensions default to raw. ISOs return "iso" so
@@ -131,6 +132,7 @@ prompt_boot_mode_and_usb() {
         --text="Choose firmware and VM options:" \
         --separator="|" \
         --field="Enable USB Support:CHK" "TRUE" \
+        --field="Headless Mode (no display):CHK" "FALSE" \
         --button="Cancel:1" --button="BIOS:10" --button="UEFI:12")
     rc=$?
 
@@ -140,12 +142,18 @@ prompt_boot_mode_and_usb() {
          *) return 1 ;;
     esac
 
-    local usb_flag
+    local usb_flag headless_flag
     usb_flag=$(echo "$result" | cut -d'|' -f1)
+    headless_flag=$(echo "$result" | cut -d'|' -f2)
     if [ "$usb_flag" = "TRUE" ]; then
         usb_hotplug_enabled=1
     else
         usb_hotplug_enabled=0
+    fi
+    if [ "$headless_flag" = "TRUE" ]; then
+        headless_enabled=1
+    else
+        headless_enabled=0
     fi
     return 0
 }
@@ -602,6 +610,9 @@ while true; do
     else
         echo "USB Hotplug: disabled"
     fi
+    if [ "$headless_enabled" = "1" ]; then
+        echo "Display: HEADLESS (no GUI)"
+    fi
     if [ -n "$iso_path" ]; then
         echo "ISO Path: $iso_path"
     fi
@@ -640,6 +651,14 @@ while true; do
             usb_args="-usb -device usb-ehci,id=ehci -device qemu-xhci,id=xhci"
         fi
 
+        # Headless mode: suppress the QEMU display window entirely.
+        # VGA stays emulated so the guest boots normally; -display none is
+        # used instead of -nographic to keep -monitor stdio intact.
+        display_args=""
+        if [ "$headless_enabled" = "1" ]; then
+            display_args="-display none"
+        fi
+
         # SSH-forward host port. Persist within a session so a restart for
         # IPv4 reconfig keeps the same SSH endpoint.
         if [ -z "$random_port" ]; then
@@ -670,7 +689,7 @@ while true; do
             fi
         fi
 
-        qemu_command="$QEMU_BIN $QEMU_MACHINE_ARGS -smp 4 -m ${ram_size}M $primary_args $usb_args -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait $bios_args $network_args $extra_disks"
+        qemu_command="$QEMU_BIN $QEMU_MACHINE_ARGS -smp 4 -m ${ram_size}M $primary_args $usb_args $display_args -device virtio-scsi-pci,id=scsi0 -monitor stdio -monitor unix:/tmp/qemu-monitor.sock,server,nowait $bios_args $network_args $extra_disks"
 
         echo "Running: $qemu_command"
         echo "SSH port forwarding: localhost:${random_port} -> VM:22"
@@ -679,6 +698,7 @@ while true; do
         fi
 
         export QEMU_QUICKBOOT_SSH_PORT="$random_port"
+        export QEMU_QUICKBOOT_HEADLESS="$headless_enabled"
 
         # Resolve script dir for hotplug helper
         SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
@@ -704,7 +724,9 @@ while true; do
 
         hotplug_pid=""
         hotplug_pgid=""
-        if [ "$usb_hotplug_enabled" = "1" ]; then
+        # The session panel launches when USB hotplug is enabled, OR always in
+        # headless mode (it is then the only way to control / stop the VM).
+        if [ "$usb_hotplug_enabled" = "1" ] || [ "$headless_enabled" = "1" ]; then
             # Helper runs in its own process group via setsid; killing the
             # group reaches yad and any descendants when QEMU dies.
             setsid bash -c '
@@ -775,6 +797,7 @@ while true; do
     extra_disks=""
     iso_path=""
     usb_hotplug_enabled=1
+    headless_enabled=0
     random_port=""
 done
 

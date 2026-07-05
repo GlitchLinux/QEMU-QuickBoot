@@ -63,6 +63,16 @@ fi
 
 touch "$MEMFILE"
 
+# --- Headless mode notice ---
+# Set by qemu-quickboot.sh when the VM was launched with -display none.
+# The panel is then the primary control surface for the VM.
+PANEL_TITLE="VM Session Settings"
+PANEL_TEXT="QEMU-QuickBoot - live VM controls"
+if [ "$QEMU_QUICKBOOT_HEADLESS" = "1" ]; then
+    PANEL_TITLE="VM Session Settings [HEADLESS]"
+    PANEL_TEXT="QEMU VM launched in headless mode\nQEMU-QuickBoot - live VM controls"
+fi
+
 # --- Helper: send command to QEMU monitor (fire-and-forget) ---
 send_monitor() {
     echo "$1" | socat - UNIX-CONNECT:"$SOCK" &>/dev/null
@@ -387,7 +397,13 @@ ${usernet_raw:-  (no response from QEMU monitor)}"
             "SSH Quick-Forward...")
                 # Show current SSH forward, let user copy ssh command, or change host port.
                 local ssh_action ssh_user
-                ssh_user="${USER:-root}"
+                # Prefer the real logged-in user: the launcher usually runs
+                # under sudo, which makes $USER = root. SUDO_USER holds the
+                # invoking user; logname is the session fallback.
+                ssh_user="${SUDO_USER:-$(logname 2>/dev/null)}"
+                if [ -z "$ssh_user" ] || [ "$ssh_user" = "root" ]; then
+                    ssh_user="${USER:-root}"
+                fi
 
                 ssh_action=$(yad --list $YAD_ICON $YAD_POS \
                     --title="SSH Quick-Forward" \
@@ -986,10 +1002,10 @@ power_submenu() {
 # =============================================================================
 while true; do
     action=$(yad --list $YAD_ICON $YAD_POS \
-        --title="VM Session Settings" \
+        --title="$PANEL_TITLE" \
         --width="$smaller_width" --height="$smaller_height" \
         --column="Section" \
-        --text="QEMU-QuickBoot — live VM controls" \
+        --text="$PANEL_TEXT" \
         --button="Quit Panel:1" --button="OK:0" \
         "USB Devices" \
         "Network" \
