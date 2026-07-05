@@ -6,18 +6,23 @@
 
 ---
 
-Works on Debian, Ubuntu, Mint, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora, CentOS, Alma, Rocky & RHEL. Both BIOS and UEFI. Tested as of April 2026.
+Works on Debian, Ubuntu, Mint, Arch, CachyOS, EndeavourOS, Garuda, Manjaro, Fedora, CentOS, Alma, Rocky & RHEL. Both BIOS and UEFI. Tested as of July 2026.
 
 ## What it does
 
 A few `yad` dialogs configure a virtual machine and launch it. The whole pre-boot flow takes about 15 seconds.
 
-1. Pick a boot source — a connected device, a disk image, or an ISO + drive combo
+1. Pick a boot source - a connected device, a disk image, or an ISO + drive combo
 2. Optionally attach extra disks (physical or virtual)
-3. Select firmware (BIOS or UEFI)
+3. Select firmware (BIOS or UEFI), toggle USB support and Headless Mode
 4. Set RAM in MB
 
-QEMU then starts with KVM acceleration, USB 3.0, and SSH port forwarding on a random host port. A companion panel — **VM Session Settings** — opens alongside the VM so you can hotplug USB devices, add port forwards, change the guest's IPv4 subnet, or shut the VM down cleanly. All without restarting QEMU.
+QEMU then starts with KVM acceleration, USB 3.0, and SSH port forwarding on a random host port. A companion panel - **VM Session Settings** - opens alongside the VM so you can hotplug USB devices, add port forwards, change the guest's IPv4 subnet, or shut the VM down cleanly. All without restarting QEMU.
+
+## What's new in v1.6
+
+- **Headless Mode.** A new checkbox in the boot options dialog (unchecked by default) launches the VM with `-display none` - no QEMU window at all. VGA stays emulated so the guest boots normally; you interact over SSH. The VM Session Settings panel always opens for headless VMs (even with USB disabled) since it is then your only control surface, and it announces **"QEMU VM launched in headless mode"** with a `[HEADLESS]` window title.
+- **SSH copy targets the right user.** The panel's SSH Quick-Forward previously suggested `ssh -p N root@localhost` when launched via sudo - useless on guests where root SSH login is disabled. It now resolves the real logged-in user via `SUDO_USER`/`logname`, so the copied command works out of the box.
 
 ## What's new in v1.5
 
@@ -28,20 +33,29 @@ The big rewrite earlier in 2026 swapped Zenity for YAD and introduced the compan
 - **USB toggle actually works now.** Unchecking "Enable USB Support" at launch removes the USB controllers from the VM, not just the helper script.
 - **Companion panel renamed** from `usb-hotplug.sh` to `quickboot-settings.sh`. The window title is now "VM Session Settings" because it does more than USB.
 - **Smart SSH forward.** View the current port, add a new one live, or copy `ssh -p N user@localhost` to clipboard (xclip / wl-copy / xsel).
-- **Manual IPv4 config.** Set a custom CIDR, gateway, DHCP start, and DNS. QEMU can't change netdev parameters on a running VM, so the panel queues the change and offers "Save & Restart Now". The parent script re-launches QEMU with the same drives, RAM, boot mode, and SSH port — just with the new network.
+- **Manual IPv4 config.** Set a custom CIDR, gateway, DHCP start, and DNS. QEMU can't change netdev parameters on a running VM, so the panel queues the change and offers "Save & Restart Now". The parent script re-launches QEMU with the same drives, RAM, boot mode, and SSH port - just with the new network.
 - **VM power controls.** Soft reset, ACPI shutdown, force-quit, restart-with-pending-config. All over HMP.
 
 <img width="1180" height="685" alt="578569244-dcf6d89a-d149-4eea-bfb1-2aca5dbb5dbb" src="https://github.com/user-attachments/assets/6c8eaa37-9ddb-4dd4-b2ca-06cc2a976a83" />
 
-## [QEMU-QuickBoot-v1.5 Installer](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.5)
+## [QEMU-QuickBoot-v1.6 Installer](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/tag/QEMU-QuickBoot-v1.6)
 ### For Debian Based Distros:
-## [![debian](https://github.com/user-attachments/assets/03adedd6-ac80-4cfc-961a-bb22315eaf9d)](https://...deb-url)![Ubuntu](https://github.com/user-attachments/assets/fa705583-84ba-46d6-8601-9e22bb182ff7)![Mint](https://github.com/user-attachments/assets/4955d558-791a-4670-a6b1-0090e5566c89) [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-v1.5-1_all.deb)
+## [![debian](https://github.com/user-attachments/assets/03adedd6-ac80-4cfc-961a-bb22315eaf9d)](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-v1.6-1_all.deb)![Ubuntu](https://github.com/user-attachments/assets/fa705583-84ba-46d6-8601-9e22bb182ff7)![Mint](https://github.com/user-attachments/assets/4955d558-791a-4670-a6b1-0090e5566c89) [.deb](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-v1.6-1_all.deb)
 
 ### For RHEL Based Distros:
-## [![rhel](https://github.com/user-attachments/assets/10f6e927-68f9-45e2-a886-549b333587f2)](https://...rpm-url)![cent](https://github.com/user-attachments/assets/80e898fa-4861-4a94-9860-355c1ad43520)![fedora](https://github.com/user-attachments/assets/924dbe3e-d958-4405-83af-e92f0d630b75) [.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1.fc41.noarch.rpm)
+## [![rhel](https://github.com/user-attachments/assets/10f6e927-68f9-45e2-a886-549b333587f2)](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-1.6-1.noarch.rpm)![cent](https://github.com/user-attachments/assets/80e898fa-4861-4a94-9860-355c1ad43520)![fedora](https://github.com/user-attachments/assets/924dbe3e-d958-4405-83af-e92f0d630b75) [.rpm](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-1.6-1.noarch.rpm)
 
 ### For Arch Based Distros: 
-## [![rhel](https://github.com/user-attachments/assets/0975c6d8-d100-4c5d-9e17-9177aecfc988)](https://...rpm-url)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.5/qemu-quickboot-1.5-1-any.pkg.tar.zst)
+## [![arch](https://github.com/user-attachments/assets/0975c6d8-d100-4c5d-9e17-9177aecfc988)](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-1.6-1-any.pkg.tar.zst)![Manjaro](https://github.com/user-attachments/assets/a93d0c08-f3e6-498e-82a2-bb1432a2a9a8)![endevour](https://github.com/user-attachments/assets/ce007302-ddef-4fa0-93cc-2f0f3e5e7e27) [.zst](https://github.com/GlitchLinux/QEMU-QuickBoot/releases/download/QEMU-QuickBoot-v1.6/qemu-quickboot-1.6-1-any.pkg.tar.zst)
+
+### Install from the Glitch Linux APT repository (Debian / Ubuntu / Mint)
+
+Add the repo once, then install and update `qemu-quickboot` like any other package:
+
+```bash
+curl -fsSL https://glitchlinux.com/apt/setup.sh | sudo bash
+sudo apt install qemu-quickboot
+```
 
 ### Test the utility without installing it
 
@@ -89,7 +103,7 @@ sudo bash qemu-quickboot.sh
 sudo bash qemu-quickboot.sh
 ```
 
-The settings panel auto-launches a few seconds after the VM boots, as long as USB support was enabled at launch. Both scripts must live in the same directory.
+The settings panel auto-launches a few seconds after the VM boots when USB support is enabled at launch, and always in Headless Mode. Both scripts must live in the same directory.
 
 You can also run the panel manually any time a VM is alive:
 
@@ -97,13 +111,23 @@ You can also run the panel manually any time a VM is alive:
 bash quickboot-settings.sh
 ```
 
+### Headless Mode
+
+Check **Headless Mode (no display)** in the boot options dialog and the VM runs with no display window at all. The Session Settings panel opens as usual (announcing "QEMU VM launched in headless mode") and SSH is your console:
+
+```bash
+ssh -p <random_port> user@localhost
+```
+
+Shut a headless VM down cleanly from the panel via **VM Power → Shutdown** or force-quit it if the guest hangs. Good for background installs, servers, and smoke tests where you never need to see the framebuffer.
+
 ### SSH into the guest
 
 ```bash
 ssh -p <random_port> user@localhost
 ```
 
-The port is printed to the terminal at launch. The settings panel can also copy the full command to clipboard via **Network → SSH Quick-Forward**.
+The port is printed to the terminal at launch. The settings panel can also copy the full command to clipboard via **Network → SSH Quick-Forward** - since v1.6 it fills in your real username automatically, even when the tool was launched with sudo.
 
 ### Optional clipboard tools
 
@@ -122,10 +146,10 @@ For the "copy SSH command to clipboard" feature, install one of: `xclip`, `wl-cl
 <p align="center">
   <img width="260" alt="USB Devices submenu" src="https://github.com/user-attachments/assets/9971a09e-cbde-47ef-8ed5-cb6a65d90a31" />
   <img width="280" alt="Network submenu with SSH host port" src="https://github.com/user-attachments/assets/ef6fe135-321f-49d3-9598-d42e3cc367d3" />
-  <img width="220" alt="Boot Mode firmware and USB toggle" src="https://github.com/user-attachments/assets/68567ef9-39dd-4124-bf82-2d1c29ef2c9c" />
+  <img width="220" alt="Boot Mode firmware, USB and Headless toggles" src="https://github.com/user-attachments/assets/68567ef9-39dd-4124-bf82-2d1c29ef2c9c" />
 </p>
 
-Four sections. Everything is driven over the QEMU monitor socket at `/tmp/qemu-monitor.sock`.
+Four sections. Everything is driven over the QEMU monitor socket at `/tmp/qemu-monitor.sock`. For headless VMs the panel title reads **VM Session Settings [HEADLESS]**.
 
 **USB Devices.** Attach (picks from `lsusb`), detach (lists what you've attached this session), and a session log of everything that's been hotplugged.
 
@@ -141,6 +165,7 @@ Four sections. Everything is driven over the QEMU monitor socket at `/tmp/qemu-m
 - Install an OS onto a USB stick from inside a VM
 - Try out bootable media before writing it to real hardware
 - Spin up a throwaway VM for testing
+- Run a background guest headless and manage it entirely over SSH
 - Hotplug a USB stick, smartcard reader, or external drive into a running guest
 - Stress-test a guest's reaction to network changes (custom subnets, gateways, DNS)
 
@@ -169,7 +194,7 @@ MIT. See [LICENSE](https://github.com/GlitchLinux/QEMU-QuickBoot/blob/main/LICEN
 
 ## Contributing
 
-Issues and PRs welcome. On the radar: multi-VM session support, ARM/aarch64 guest boot, and a headless smoke-test mode.
+Issues and PRs welcome. On the radar: multi-VM session support, ARM/aarch64 guest boot, and VNC/SPICE remote display for headless VMs.
 
 ---
 
