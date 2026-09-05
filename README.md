@@ -201,4 +201,4 @@ Issues and PRs welcome. On the radar: multi-VM session support, ARM/aarch64 gues
 [![GLITCH LINUX](https://github.com/user-attachments/assets/6ddec8b1-e5b0-4a9f-a793-b7c67b58236c)](https://glitchlinux.wtf)
 
 **GLITCH LINUX**
-[glitchlinux.wtf](https://glitchlinux.wtf) · [info@glitchlinux.com](mailto:info@glitchlinux.com)
+[glitchlinux.wtf](https://glitchlinux.com) · [info@glitchlinux.com](mailto:info@glitchlinux.com)
