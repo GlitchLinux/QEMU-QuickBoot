@@ -19,7 +19,6 @@
 # When true, an extra "Guest Architecture" dropdown appears in the boot mode
 # dialog. When false (default), guest arch always matches the host, exactly
 # as before this option existed.
-
 SPECIFY_GUEST_ARCH=false
 
 # Set the GTK theme to dark
