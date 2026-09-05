@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# QEMU QuickBoot — main launcher (uses YAD for GUI dialogs)
+# QEMU QuickBoot - main launcher (uses YAD for GUI dialogs)
 # Requires: yad, qemu-system-x86_64 or qemu-system-aarch64, socat
 # Companion script: quickboot-settings.sh (VM Session Settings panel)
 #
-# 2026 update — applied via review:
+# 2026 update - applied via review:
 #   * Format autodetection for primary boot source and extra disks
 #   * ISO selected as primary boot source now boots via -cdrom (not -drive)
 #   * USB controllers gated on the "Enable USB" checkbox
 #   * Inner restart loop so the session panel can request an IPv4 reconfig
 #     restart without losing the user's other settings
+#   * q35 machine type on x86_64 (no legacy floppy controller)
 
 # Set the GTK theme to dark
 export GTK_THEME=Orchis:dark
@@ -30,11 +31,12 @@ YAD_ICON=""
 # --- Host architecture autodetection -----------------------------------------
 # Sets QEMU_BIN and QEMU_MACHINE_ARGS based on `uname -m` so the launcher
 # works on both x86_64 and aarch64 hosts. Anything else is unsupported.
+# x86_64 uses q35 chipset (modern PCIe, native AHCI, no legacy floppy).
 HOST_ARCH="$(uname -m)"
 case "$HOST_ARCH" in
     x86_64|amd64)
         QEMU_BIN="qemu-system-x86_64"
-        QEMU_MACHINE_ARGS="-enable-kvm -cpu host"
+        QEMU_MACHINE_ARGS="-machine q35 -enable-kvm -cpu host"
         ;;
     aarch64|arm64)
         QEMU_BIN="qemu-system-aarch64"
@@ -77,20 +79,20 @@ detect_ovmf() {
     # Choose firmware candidates based on host architecture.
     if [ "${HOST_ARCH:-$(uname -m)}" = "aarch64" ] || [ "${HOST_ARCH:-}" = "arm64" ]; then
         candidates=(
-            # Debian / Ubuntu — qemu-efi-aarch64 package
+            # Debian / Ubuntu - qemu-efi-aarch64 package
             "/usr/share/AAVMF/AAVMF_CODE.fd"
             "/usr/share/AAVMF/AAVMF_CODE.ms.fd"
-            # Fedora / RHEL — edk2-aarch64
+            # Fedora / RHEL - edk2-aarch64
             "/usr/share/edk2/aarch64/QEMU_EFI.fd"
             "/usr/share/edk2/aarch64/QEMU_EFI-silent-pflash.raw"
-            # Arch — edk2-armvirt
+            # Arch - edk2-armvirt
             "/usr/share/edk2-armvirt/aarch64/QEMU_EFI.fd"
             # Generic
             "/usr/share/qemu-efi-aarch64/QEMU_EFI.fd"
         )
     else
         candidates=(
-            # Arch — modern edk2 layout (edk2-ovmf package)
+            # Arch - modern edk2 layout (edk2-ovmf package)
             "/usr/share/edk2/x64/OVMF.4m.fd"
             "/usr/share/edk2/x64/OVMF_CODE.4m.fd"
             "/usr/share/edk2-ovmf/x64/OVMF.4m.fd"
@@ -99,7 +101,7 @@ detect_ovmf() {
             "/usr/share/edk2-ovmf/x64/OVMF.fd"
             "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
             "/usr/share/ovmf/x64/OVMF.fd"
-            # Debian / Ubuntu — legacy single-file (ovmf package)
+            # Debian / Ubuntu - legacy single-file (ovmf package)
             "/usr/share/qemu/OVMF.fd"
             "/usr/share/OVMF/OVMF_CODE.fd"
             # Fedora
@@ -636,7 +638,7 @@ while true; do
         main_format=$(detect_format "$selected_drive")
 
         if [ "$main_format" = "iso" ] && [ -z "$iso_path" ]; then
-            # User picked an ISO via "Boot from file" — boot it as a CD.
+            # User picked an ISO via "Boot from file" - boot it as a CD.
             primary_args="-cdrom \"$selected_drive\" -boot order=d"
         elif [ -n "$iso_path" ]; then
             # ISO + Drive mode: drive is primary, ISO is supplementary.
@@ -802,3 +804,4 @@ while true; do
 done
 
 # End of script
+
