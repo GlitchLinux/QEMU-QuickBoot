@@ -11,6 +11,15 @@
 #   * Inner restart loop so the session panel can request an IPv4 reconfig
 #     restart without losing the user's other settings
 #   * q35 machine type on x86_64 (no legacy floppy controller)
+#   * Optional guest architecture override (SPECIFY_GUEST_ARCH) - lets the
+#     user pick a guest arch different from the host via a combobox in the
+#     boot mode dialog, falling back to TCG (no -enable-kvm) when they differ
+
+# --- Optional: allow selecting a guest architecture different from the host.
+# When true, an extra "Guest Architecture" dropdown appears in the boot mode
+# dialog. When false (default), guest arch always matches the host, exactly
+# as before this option existed.
+SPECIFY_GUEST_ARCH=false
 
 # Set the GTK theme to dark
 export GTK_THEME=Orchis:dark
@@ -28,26 +37,51 @@ ICON="$SCRIPT_DIR/qemu-quickboot.png"
 YAD_ICON=""
 [ -f "$ICON" ] && YAD_ICON="--window-icon=$ICON"
 
-# --- Host architecture autodetection -----------------------------------------
-# Sets QEMU_BIN and QEMU_MACHINE_ARGS based on `uname -m` so the launcher
-# works on both x86_64 and aarch64 hosts. Anything else is unsupported.
-# x86_64 uses q35 chipset (modern PCIe, native AHCI, no legacy floppy).
+# --- Host / guest architecture -----------------------------------------------
+# HOST_ARCH is always the real host (`uname -m`), used to decide whether KVM
+# acceleration is available. GUEST_ARCH is what QEMU actually targets - it
+# matches HOST_ARCH unless SPECIFY_GUEST_ARCH=true and the user picks a
+# different one in the boot mode dialog (see prompt_boot_mode_and_usb).
+# Anything outside x86_64/aarch64 is unsupported on either axis.
 HOST_ARCH="$(uname -m)"
 case "$HOST_ARCH" in
-    x86_64|amd64)
-        QEMU_BIN="qemu-system-x86_64"
-        QEMU_MACHINE_ARGS="-machine q35 -enable-kvm -cpu host"
-        ;;
-    aarch64|arm64)
-        QEMU_BIN="qemu-system-aarch64"
-        QEMU_MACHINE_ARGS="-machine virt -enable-kvm -cpu host"
-        ;;
+    x86_64|amd64) HOST_ARCH="x86_64" ;;
+    aarch64|arm64) HOST_ARCH="aarch64" ;;
     *)
         echo "Unsupported architecture: $HOST_ARCH" >&2
         exit 1
         ;;
 esac
-export QEMU_BIN QEMU_MACHINE_ARGS
+GUEST_ARCH="$HOST_ARCH"
+
+# --- Applies GUEST_ARCH to QEMU_BIN / QEMU_MACHINE_ARGS ---
+# Called once at startup with the default, and again after the boot mode
+# dialog if the user picked a different guest arch. When GUEST_ARCH differs
+# from HOST_ARCH, KVM cannot be used (cross-arch acceleration does not
+# exist) so the launcher falls back to TCG software emulation with a
+# generic max CPU model instead of -enable-kvm -cpu host.
+apply_guest_arch() {
+    case "$GUEST_ARCH" in
+        x86_64)
+            QEMU_BIN="qemu-system-x86_64"
+            if [ "$GUEST_ARCH" = "$HOST_ARCH" ]; then
+                QEMU_MACHINE_ARGS="-machine q35 -enable-kvm -cpu host"
+            else
+                QEMU_MACHINE_ARGS="-machine q35 -cpu max"
+            fi
+            ;;
+        aarch64)
+            QEMU_BIN="qemu-system-aarch64"
+            if [ "$GUEST_ARCH" = "$HOST_ARCH" ]; then
+                QEMU_MACHINE_ARGS="-machine virt -enable-kvm -cpu host"
+            else
+                QEMU_MACHINE_ARGS="-machine virt -cpu max"
+            fi
+            ;;
+    esac
+    export QEMU_BIN QEMU_MACHINE_ARGS
+}
+apply_guest_arch
 
 extra_disks=""
 usb_hotplug_enabled=1
@@ -74,10 +108,13 @@ detect_format() {
 # --- Detect OVMF (UEFI firmware) location across distros ---
 # Returns the first existing path from a list of well-known locations.
 # Order matters: modern Arch first, then Debian/Ubuntu, then Fedora.
+# Keys off GUEST_ARCH (not HOST_ARCH) since the firmware must match whatever
+# QEMU is actually booting, which may differ from the host under
+# SPECIFY_GUEST_ARCH.
 detect_ovmf() {
     local candidates=()
-    # Choose firmware candidates based on host architecture.
-    if [ "${HOST_ARCH:-$(uname -m)}" = "aarch64" ] || [ "${HOST_ARCH:-}" = "arm64" ]; then
+    # Choose firmware candidates based on guest architecture.
+    if [ "${GUEST_ARCH:-$(uname -m)}" = "aarch64" ] || [ "${GUEST_ARCH:-}" = "arm64" ]; then
         candidates=(
             # Debian / Ubuntu - qemu-efi-aarch64 package
             "/usr/share/AAVMF/AAVMF_CODE.fd"
@@ -116,18 +153,35 @@ detect_ovmf() {
 }
 
 # --- Helper: prompt for boot mode + USB hotplug toggle in a single form ---
-# Sets global variables: boot_mode, usb_hotplug_enabled
+# Sets global variables: boot_mode, usb_hotplug_enabled, GUEST_ARCH
 # Returns 1 if user cancels.
 #
-# UI shape: one form dialog with a single "Enable USB Support" checkbox.
-# Firmware choice is made by pressing one of three dialog buttons:
+# UI shape: one form dialog with "Enable USB Support" / "Headless Mode"
+# checkboxes, plus - only when SPECIFY_GUEST_ARCH=true - a "Guest
+# Architecture" combobox defaulted to the host's own arch. Firmware choice
+# is still made by pressing one of three dialog buttons:
 #   Cancel -> exit code 1
 #   BIOS   -> exit code 10
 #   UEFI   -> exit code 12
 # This keeps BIOS/UEFI as big, visible buttons (no dropdown) and still lets
-# us bundle the USB toggle into the same window.
+# us bundle the USB/headless toggles and the optional arch combobox into
+# the same window.
 prompt_boot_mode_and_usb() {
     local result rc
+    # Built as an array (not string interpolation) so no quoting/eval
+    # re-parsing is needed - each field stays intact even with spaces and
+    # parentheses in its label.
+    local -a arch_field_args=()
+    if [ "$SPECIFY_GUEST_ARCH" = "true" ]; then
+        # Combobox default is whichever arch matches the host, so "same as
+        # host" is always the first/pre-selected option.
+        if [ "$HOST_ARCH" = "x86_64" ]; then
+            arch_field_args=(--field="Guest Architecture:CB" "x86_64!aarch64")
+        else
+            arch_field_args=(--field="Guest Architecture:CB" "aarch64!x86_64")
+        fi
+    fi
+
     result=$(yad --form $YAD_ICON \
         --title="Select Boot Mode" \
         --width="$smaller_width" --height="$smaller_height" \
@@ -135,6 +189,7 @@ prompt_boot_mode_and_usb() {
         --separator="|" \
         --field="Enable USB Support:CHK" "TRUE" \
         --field="Headless Mode (no display):CHK" "FALSE" \
+        "${arch_field_args[@]}" \
         --button="Cancel:1" --button="BIOS:10" --button="UEFI:12")
     rc=$?
 
@@ -144,7 +199,7 @@ prompt_boot_mode_and_usb() {
          *) return 1 ;;
     esac
 
-    local usb_flag headless_flag
+    local usb_flag headless_flag arch_choice
     usb_flag=$(echo "$result" | cut -d'|' -f1)
     headless_flag=$(echo "$result" | cut -d'|' -f2)
     if [ "$usb_flag" = "TRUE" ]; then
@@ -156,6 +211,22 @@ prompt_boot_mode_and_usb() {
         headless_enabled=1
     else
         headless_enabled=0
+    fi
+
+    if [ "$SPECIFY_GUEST_ARCH" = "true" ]; then
+        arch_choice=$(echo "$result" | cut -d'|' -f3)
+        if [ -n "$arch_choice" ] && [ "$arch_choice" != "$GUEST_ARCH" ]; then
+            GUEST_ARCH="$arch_choice"
+            apply_guest_arch
+            if [ "$GUEST_ARCH" != "$HOST_ARCH" ]; then
+                yad --image="dialog-warning" $YAD_ICON \
+                    --title="Emulated Architecture" \
+                    --width="$bigger_width" --height="$original_height" \
+                    --text-align=left \
+                    --text="Guest ($GUEST_ARCH) differs from host ($HOST_ARCH).\n\nKVM acceleration is unavailable across architectures, so this VM will run under full software emulation (TCG).\n\nExpect significantly reduced performance - fine for boot/compatibility testing, not for a usable daily environment." \
+                    --button="OK:0"
+            fi
+        fi
     fi
     return 0
 }
